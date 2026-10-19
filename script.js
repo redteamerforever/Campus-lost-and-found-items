@@ -6,14 +6,38 @@ const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ===== 2. PAGE ELEMENTS =====
-const form = document.querySelector(".post-form");
+// ===== 2. CATEGORIES =====
+const CATEGORIES = {
+  wallet: "👛 Wallet",
+  phone: "📱 Phone",
+  keys: "🔑 Keys",
+  id: "🪪 ID / Cards",
+  bag: "🎒 Bag",
+  books: "📚 Books",
+  electronics: "💻 Electronics",
+  clothing: "👕 Clothing",
+  other: "📦 Other"
+};
+
+// ===== 3. PAGE ELEMENTS =====
+const form = document.getElementById("postForm");
 const postBtn = form.querySelector('button[type="submit"]');
-const feed = document.getElementById("feed");
-const feedStatus = document.getElementById("feedStatus");
-const statsBox = document.getElementById("stats");
+const openPostBtn = document.getElementById("openPostBtn");
+const themeBtn = document.getElementById("themeBtn");
+const categorySelect = document.getElementById("category");
+const categoryFilter = document.getElementById("categoryFilter");
+const sortSelect = document.getElementById("sortSelect");
 const searchInput = document.getElementById("searchInput");
 const chips = document.querySelectorAll(".chip");
+const tabs = document.querySelectorAll(".tab");
+const feed = document.getElementById("feed");
+const feedStatus = document.getElementById("feedStatus");
+const viewMapBox = document.getElementById("viewMapBox");
+const mapNote = document.getElementById("mapNote");
+const statLost = document.getElementById("statLost");
+const statFound = document.getElementById("statFound");
+const statSolved = document.getElementById("statSolved");
+const toasts = document.getElementById("toasts");
 const cameraInput = document.getElementById("cameraPhoto");
 const galleryInput = document.getElementById("galleryPhoto");
 const photoStatus = document.getElementById("photoStatus");
@@ -23,13 +47,100 @@ const locationStatus = document.getElementById("locationStatus");
 const mapBox = document.getElementById("mapBox");
 
 let items = [];            // posts loaded from Supabase
+let lastList = [];         // posts currently shown (after filters)
 let currentUserId = null;  // this browser's anonymous user id
 let selectedFile = null;   // photo chosen by the user
 let pickedLocation = null; // pin {lat, lng}
+let userPos = null;        // where the visitor is (for "nearest")
 let filterType = "all";    // all | lost | found | solved
+let categoryType = "all";  // all or a category key
+let sortType = "newest";   // newest | expiring | nearest
 let searchText = "";       // what is typed in the search box
+let viewMode = "list";     // list | map
+let refitNext = false;     // zoom the big map to fit the posts
+let firstRender = true;    // play the entrance animation only once
 
-// ===== 3. SIGN IN (anonymous, automatic, nothing to see) =====
+// fill the two category drop-downs
+categoryFilter.append(new Option("All categories", "all"));
+Object.keys(CATEGORIES).forEach(function (key) {
+  categorySelect.append(new Option(CATEGORIES[key], key));
+  categoryFilter.append(new Option(CATEGORIES[key], key));
+});
+
+// ===== 4. SMALL HELPERS =====
+function toast(message, kind) {
+  const t = document.createElement("div");
+  t.className = "toast " + (kind || "");
+  t.textContent = message;
+  toasts.append(t);
+  setTimeout(function () { t.remove(); }, 3500);
+}
+
+function timeAgo(iso) {
+  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + " min ago";
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + " h ago";
+  const days = Math.floor(hours / 24);
+  return days + (days === 1 ? " day ago" : " days ago");
+}
+
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const toRad = function (d) { return d * Math.PI / 180; };
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 2 * 6371 * Math.asin(Math.sqrt(a));
+}
+
+function formatDistance(km) {
+  return km < 1 ? Math.round(km * 1000) + " m" : km.toFixed(1) + " km";
+}
+
+function animateCount(el, target) {
+  const start = Number(el.textContent) || 0;
+  if (start === target) return;
+  let step = 0;
+  const timer = setInterval(function () {
+    step++;
+    el.textContent = Math.round(start + (target - start) * step / 20);
+    if (step >= 20) {
+      clearInterval(timer);
+      el.textContent = target;
+    }
+  }, 30);
+}
+
+// ===== 5. DARK MODE =====
+function applyTheme(dark) {
+  document.body.classList.toggle("dark", dark);
+  themeBtn.textContent = dark ? "☀️" : "🌙";
+  try {
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  } catch (e) {}
+}
+
+let savedTheme = null;
+try {
+  savedTheme = localStorage.getItem("theme");
+} catch (e) {}
+applyTheme(savedTheme === "dark");
+
+themeBtn.addEventListener("click", function () {
+  applyTheme(!document.body.classList.contains("dark"));
+});
+
+// open / close the post form
+openPostBtn.addEventListener("click", function () {
+  form.hidden = !form.hidden;
+  if (!form.hidden) form.scrollIntoView({ behavior: "smooth" });
+});
+
+// ===== 6. SIGN IN (anonymous, automatic, nothing to see) =====
 async function ensureSignedIn() {
   const { data } = await db.auth.getSession();
   if (data.session) {
@@ -42,7 +153,7 @@ async function ensureSignedIn() {
   currentUserId = result.data.user.id;
 }
 
-// ===== 4. LOAD POSTS =====
+// ===== 7. LOAD POSTS =====
 async function loadItems() {
   const { data, error } = await db
     .from("items")
@@ -54,7 +165,7 @@ async function loadItems() {
   render();
 }
 
-// ===== 5. SHRINK A PHOTO (returns a small JPEG file) =====
+// ===== 8. SHRINK A PHOTO (returns a small JPEG file) =====
 function shrinkImage(file) {
   return new Promise(function (resolve, reject) {
     const reader = new FileReader();
@@ -85,7 +196,7 @@ function shrinkImage(file) {
   });
 }
 
-// ===== 6. WHEN A PHOTO IS TAKEN OR CHOSEN =====
+// ===== 9. WHEN A PHOTO IS TAKEN OR CHOSEN =====
 function handlePhotoPick(event) {
   const file = event.target.files[0];
   if (file) {
@@ -97,7 +208,7 @@ function handlePhotoPick(event) {
 cameraInput.addEventListener("change", handlePhotoPick);
 galleryInput.addEventListener("change", handlePhotoPick);
 
-// ===== 7. MAP WITH STREET / SATELLITE / TERRAIN =====
+// ===== 10. MAP INSIDE THE FORM (pick a spot) =====
 let map = null;
 let marker = null;
 let accuracyCircle = null;
@@ -222,7 +333,7 @@ autoBtn.addEventListener("click", function () {
   );
 });
 
-// ===== 8. WHATSAPP HELPERS =====
+// ===== 11. WHATSAPP, SHARE, PHOTO VIEWER =====
 // Turns what the user typed into digits only, with country code.
 // A 10-digit number is treated as an Indian number (+91).
 function cleanWhatsApp(raw) {
@@ -241,7 +352,33 @@ function whatsappLink(item) {
   return "https://wa.me/" + item.whatsapp + "?text=" + encodeURIComponent(text);
 }
 
-// ===== 9. DELETE, MARK AS SOLVED, CONFETTI =====
+async function sharePost(item) {
+  const text = (item.type === "lost" ? "LOST: " : "FOUND: ") + item.title +
+    " at " + item.place + " (Campus Lost & Found)";
+  const url = window.location.href.split("#")[0];
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "Campus Lost & Found", text: text, url: url });
+    } catch (e) {}
+  } else {
+    window.open("https://wa.me/?text=" + encodeURIComponent(text + " " + url), "_blank", "noopener");
+  }
+}
+
+function openLightbox(src) {
+  const overlay = document.createElement("div");
+  overlay.className = "lightbox";
+  const img = document.createElement("img");
+  img.src = src;
+  overlay.append(img);
+  overlay.addEventListener("click", function () {
+    overlay.remove();
+  });
+  document.body.append(overlay);
+}
+
+// ===== 12. DELETE, MARK AS SOLVED, CONFETTI =====
 async function deleteItem(id) {
   const sure = confirm("Delete this post? This cannot be undone.");
   if (!sure) return;
@@ -249,10 +386,11 @@ async function deleteItem(id) {
   const { error } = await db.from("items").delete().eq("id", id);
 
   if (error) {
-    alert("Could not delete: " + error.message);
+    toast("Could not delete: " + error.message, "error");
     return;
   }
 
+  toast("Post deleted");
   await loadItems();
 }
 
@@ -265,12 +403,15 @@ async function setSolved(id, solved) {
     .eq("id", id);
 
   if (error) {
-    alert("Could not update: " + error.message);
+    toast("Could not update: " + error.message, "error");
     return;
   }
 
   await loadItems();
-  if (solved) celebrate();
+  if (solved) {
+    celebrate();
+    toast("Case solved! 🎉", "success");
+  }
 }
 
 function celebrate() {
@@ -286,9 +427,16 @@ function celebrate() {
   }
 }
 
-// ===== 10. SEARCH AND FILTER =====
+// ===== 13. SEARCH, FILTER, SORT, LIST / MAP TABS =====
 searchInput.addEventListener("input", function () {
   searchText = searchInput.value.trim().toLowerCase();
+  refitNext = true;
+  render();
+});
+
+categoryFilter.addEventListener("change", function () {
+  categoryType = categoryFilter.value;
+  refitNext = true;
   render();
 });
 
@@ -298,11 +446,138 @@ chips.forEach(function (chip) {
     chips.forEach(function (c) {
       c.classList.toggle("active", c === chip);
     });
+    refitNext = true;
     render();
   });
 });
 
-// ===== 11. DRAW ALL POSTS ON THE PAGE =====
+sortSelect.addEventListener("change", function () {
+  sortType = sortSelect.value;
+
+  if (sortType === "nearest" && !userPos) {
+    if (!navigator.geolocation) {
+      toast("Location is not supported on this device.", "error");
+      sortType = "newest";
+      sortSelect.value = "newest";
+      render();
+      return;
+    }
+
+    toast("Finding your location...");
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        userPos = { lat: position.coords.latitude, lng: position.coords.longitude };
+        render();
+      },
+      function () {
+        toast("Could not get your location. Please allow location access.", "error");
+        sortType = "newest";
+        sortSelect.value = "newest";
+        render();
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  } else {
+    render();
+  }
+});
+
+tabs.forEach(function (tab) {
+  tab.addEventListener("click", function () {
+    viewMode = tab.dataset.view;
+    tabs.forEach(function (t) {
+      t.classList.toggle("active", t === tab);
+    });
+
+    feed.hidden = viewMode === "map";
+    viewMapBox.hidden = viewMode !== "map";
+
+    if (viewMode === "map") {
+      initViewMap();
+      refitNext = true;
+      setTimeout(function () {
+        viewMap.invalidateSize();
+        updateViewMap();
+      }, 100);
+    }
+  });
+});
+
+// ===== 14. BIG MAP WITH ALL POSTS =====
+let viewMap = null;
+let viewLayer = null;
+
+function initViewMap() {
+  if (viewMap) return;
+
+  viewMap = L.map("viewMap").setView([20.5937, 78.9629], 5);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "© OpenStreetMap contributors"
+  }).addTo(viewMap);
+  viewLayer = L.layerGroup().addTo(viewMap);
+}
+
+function updateViewMap() {
+  if (!viewMap) return;
+
+  viewLayer.clearLayers();
+  const points = [];
+  let missing = 0;
+
+  lastList.forEach(function (item) {
+    if (!(item.lat && item.lng)) {
+      missing++;
+      return;
+    }
+
+    let color = item.type === "lost" ? "rgb(220, 20, 60)" : "rgb(46, 139, 87)";
+    if (item.status === "solved") color = "rgb(111, 134, 214)";
+
+    const dot = L.circleMarker([item.lat, item.lng], {
+      radius: 11,
+      color: "rgb(255, 255, 255)",
+      weight: 2,
+      fillColor: color,
+      fillOpacity: 0.95
+    });
+
+    const box = document.createElement("div");
+    const title = document.createElement("strong");
+    title.textContent = (CATEGORIES[item.category] || CATEGORIES.other) + " " + item.title;
+    const where = document.createElement("div");
+    where.textContent = item.place;
+    box.append(title, where);
+
+    if (item.status !== "solved") {
+      const link = document.createElement("a");
+      link.href = whatsappLink(item);
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "💬 WhatsApp";
+      box.append(link);
+    }
+
+    dot.bindPopup(box);
+    dot.addTo(viewLayer);
+    points.push([item.lat, item.lng]);
+  });
+
+  if (points.length === 0) {
+    mapNote.textContent = "No posts with a location to show.";
+  } else {
+    mapNote.textContent = missing > 0
+      ? missing + " post(s) have no location and are not on the map."
+      : "";
+  }
+
+  if (refitNext && points.length > 0) {
+    viewMap.fitBounds(points, { maxZoom: 17, padding: [30, 30] });
+  }
+  refitNext = false;
+}
+
+// ===== 15. DRAW ALL POSTS ON THE PAGE =====
 function render() {
   feed.innerHTML = "";
 
@@ -313,22 +588,26 @@ function render() {
     return new Date(item.expires_at).getTime() > now;
   });
 
-  const solvedCount = active.filter(function (i) { return i.status === "solved"; }).length;
-  statsBox.textContent = active.length === 0 ? "" :
-    "🎉 " + solvedCount + " reunited · 🔍 " + (active.length - solvedCount) + " still looking";
+  // counters at the top
+  animateCount(statLost, active.filter(function (i) {
+    return i.status !== "solved" && i.type === "lost";
+  }).length);
+  animateCount(statFound, active.filter(function (i) {
+    return i.status !== "solved" && i.type === "found";
+  }).length);
+  animateCount(statSolved, active.filter(function (i) {
+    return i.status === "solved";
+  }).length);
 
-  if (active.length === 0) {
-    feedStatus.textContent = "No posts yet. Be the first to post!";
-    return;
-  }
-
-  // apply the filter chip and the search box
+  // apply filter chip, category and search box
   const list = active.filter(function (item) {
     const solved = item.status === "solved";
 
     if (filterType === "solved" && !solved) return false;
     if ((filterType === "lost" || filterType === "found") &&
         (solved || item.type !== filterType)) return false;
+
+    if (categoryType !== "all" && item.category !== categoryType) return false;
 
     if (searchText) {
       const text = (item.title + " " + item.place + " " + item.name).toLowerCase();
@@ -337,11 +616,38 @@ function render() {
     return true;
   });
 
-  // open cases first, solved ones after
-  list.sort(function (a, b) {
-    return (a.status === "solved") - (b.status === "solved");
+  // distance from the visitor (only if they allowed location)
+  list.forEach(function (item) {
+    item._dist = userPos && item.lat && item.lng
+      ? distanceKm(userPos.lat, userPos.lng, item.lat, item.lng)
+      : null;
   });
 
+  // sort: open cases first, solved after, then the chosen order
+  list.sort(function (a, b) {
+    const solvedDiff = (a.status === "solved") - (b.status === "solved");
+    if (solvedDiff !== 0) return solvedDiff;
+
+    if (sortType === "expiring") {
+      return new Date(a.expires_at) - new Date(b.expires_at);
+    }
+
+    if (sortType === "nearest" && userPos) {
+      const da = a._dist === null ? Infinity : a._dist;
+      const dbb = b._dist === null ? Infinity : b._dist;
+      if (da !== dbb) return da - dbb;
+    }
+
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  lastList = list;
+  if (viewMode === "map") updateViewMap();
+
+  if (active.length === 0) {
+    feedStatus.textContent = "No posts yet. Be the first to post!";
+    return;
+  }
   if (list.length === 0) {
     feedStatus.textContent = "No posts match your search.";
     return;
@@ -353,7 +659,7 @@ function render() {
     const isOwner = item.owner_id === currentUserId;
 
     const card = document.createElement("div");
-    card.className = "card" + (solved ? " solved" : "");
+    card.className = "card" + (solved ? " solved" : "") + (firstRender ? " pop" : "");
 
     if (solved) {
       const banner = document.createElement("div");
@@ -368,16 +674,23 @@ function render() {
     tag.className = "tag " + item.type;
     tag.textContent = item.type.toUpperCase();
 
+    const catChip = document.createElement("span");
+    catChip.className = "cat-chip";
+    catChip.textContent = CATEGORIES[item.category] || CATEGORIES.other;
+
     const heading = document.createElement("h2");
     heading.textContent = item.title;
 
-    card.append(tag, heading);
+    card.append(tag, catChip, heading);
 
     if (item.image_url) {
       const photo = document.createElement("img");
       photo.className = "item-photo";
       photo.src = item.image_url;
       photo.alt = item.title;
+      photo.addEventListener("click", function () {
+        openLightbox(item.image_url);
+      });
       card.append(photo);
     }
 
@@ -387,12 +700,17 @@ function render() {
     const placeLine = document.createElement("p");
     placeLine.textContent = (item.type === "lost" ? "Lost" : "Found") + " at " + item.place;
 
-    const dateLine = document.createElement("p");
-    dateLine.textContent = "Date: " + new Date(item.created_at).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric"
-    });
+    const timeLine = document.createElement("p");
+    timeLine.textContent = "🕒 " + timeAgo(item.created_at);
+    timeLine.title = new Date(item.created_at).toLocaleString();
+
+    card.append(nameLine, placeLine, timeLine);
+
+    if (item._dist !== null) {
+      const distLine = document.createElement("p");
+      distLine.textContent = "📏 " + formatDistance(item._dist) + " away";
+      card.append(distLine);
+    }
 
     const daysLeft = Math.max(0, Math.ceil((new Date(item.expires_at).getTime() - now) / 86400000));
     const expiryLine = document.createElement("p");
@@ -400,8 +718,11 @@ function render() {
     expiryLine.textContent = "⏳ " + (daysLeft === 0
       ? "Expires today"
       : "Expires in " + daysLeft + (daysLeft === 1 ? " day" : " days"));
+    card.append(expiryLine);
 
-    card.append(nameLine, placeLine, dateLine, expiryLine);
+    // map link + share button
+    const actions = document.createElement("div");
+    actions.className = "actions";
 
     if (item.lat && item.lng) {
       const mapLink = document.createElement("a");
@@ -410,8 +731,19 @@ function render() {
       mapLink.target = "_blank";
       mapLink.rel = "noopener noreferrer";
       mapLink.textContent = "📍 View on map";
-      card.append(mapLink);
+      actions.append(mapLink);
     }
+
+    const shareBtn = document.createElement("button");
+    shareBtn.type = "button";
+    shareBtn.className = "share-btn";
+    shareBtn.textContent = "🔗 Share";
+    shareBtn.addEventListener("click", function () {
+      sharePost(item);
+    });
+    actions.append(shareBtn);
+
+    card.append(actions);
 
     // WhatsApp button (only on open cases)
     if (!solved) {
@@ -450,15 +782,17 @@ function render() {
 
     feed.append(card);
   });
+
+  firstRender = false;
 }
 
-// ===== 12. WHEN THE FORM IS SUBMITTED =====
+// ===== 16. WHEN THE FORM IS SUBMITTED =====
 form.addEventListener("submit", async function (event) {
   event.preventDefault();
 
   const whatsapp = cleanWhatsApp(document.getElementById("whatsapp").value);
   if (!whatsapp) {
-    alert("Please enter a valid WhatsApp number (10 digits, or with country code).");
+    toast("Please enter a valid WhatsApp number (10 digits, or with country code).", "error");
     return;
   }
 
@@ -485,6 +819,7 @@ form.addEventListener("submit", async function (event) {
     // save the post
     const result = await db.from("items").insert({
       type: document.getElementById("type").value,
+      category: categorySelect.value,
       name: document.getElementById("name").value.trim(),
       title: document.getElementById("title").value.trim(),
       place: document.getElementById("place").value.trim(),
@@ -497,23 +832,27 @@ form.addEventListener("submit", async function (event) {
 
     await loadItems();
 
-    // reset the form
+    // reset and close the form
     form.reset();
     selectedFile = null;
     pickedLocation = null;
     photoStatus.textContent = "";
     locationStatus.textContent = "";
     if (map) resetMap();
+    form.hidden = true;
+
+    toast("Posted! 🎉", "success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (err) {
     console.error(err);
-    alert("Could not post: " + (err.message || err));
+    toast("Could not post: " + (err.message || err), "error");
   } finally {
     postBtn.disabled = false;
     postBtn.textContent = "Post";
   }
 });
 
-// ===== 13. START =====
+// ===== 17. START =====
 async function start() {
   feedStatus.textContent = "Loading posts...";
 
@@ -530,6 +869,13 @@ async function start() {
     console.error(err);
     feedStatus.textContent = "Could not connect to the database. Check your keys.";
   }
+
+  // refresh the feed by itself every minute
+  setInterval(function () {
+    loadItems().catch(function (err) {
+      console.error(err);
+    });
+  }, 60000);
 }
 
 start();
