@@ -10,16 +10,37 @@
 <body>
   <h1>Campus Lost & Found</h1>
 
-  <form class="post-form">
+  <!-- Shows who is signed in, or a sign-in button -->
+  <div id="authBar" class="auth-bar"></div>
+
+  <!-- SIGN IN with email code -->
+  <div id="loginBox" class="post-form" hidden>
+    <h2>Sign in</h2>
+
+    <div id="stepEmail">
+      <input type="email" id="loginEmail" placeholder="Your email" autocomplete="email" maxlength="120">
+      <button type="button" id="sendCodeBtn">Send code</button>
+    </div>
+
+    <div id="stepCode" hidden>
+      <input type="text" id="loginCode" placeholder="Code from your email" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
+      <button type="button" id="verifyBtn">Verify</button>
+      <button type="button" id="backBtn" class="link-btn">Use a different email</button>
+    </div>
+
+    <p id="loginStatus" class="status"></p>
+  </div>
+
+  <!-- POST FORM (only visible when signed in) -->
+  <form class="post-form" hidden>
     <h2>Post an item</h2>
     <select id="type">
       <option value="lost">Lost</option>
       <option value="found">Found</option>
     </select>
-    <input type="text" id="name" placeholder="Your name" required>
-    <input type="text" id="title" placeholder="Item name (e.g. Black wallet)" required>
-    <input type="text" id="place" placeholder="Where?" required>
-    <input type="tel" id="contact" placeholder="Contact number" required>
+    <input type="text" id="name" placeholder="Your name" maxlength="60" required>
+    <input type="text" id="title" placeholder="Item name (e.g. Black wallet)" maxlength="100" required>
+    <input type="text" id="place" placeholder="Where?" maxlength="100" required>
 
     <!-- PHOTO: camera or gallery -->
     <p class="photo-label">Photo (optional)</p>
@@ -47,7 +68,24 @@
   </form>
 
   <p id="feedStatus" class="feed-status"></p>
+  <p id="stats" class="stats"></p>
   <div id="feed"></div>
+
+  <!-- CHAT WINDOW -->
+  <div id="chatModal" class="chat-modal" hidden>
+    <div class="chat-panel">
+      <div class="chat-head">
+        <strong id="chatTitle"></strong>
+        <button type="button" id="chatClose" aria-label="Close chat">✕</button>
+      </div>
+      <div id="threadList" class="thread-list" hidden></div>
+      <div id="chatMessages" class="chat-messages"></div>
+      <form id="chatForm" class="chat-form" hidden>
+        <input type="text" id="chatInput" maxlength="500" placeholder="Type a message" autocomplete="off" required>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
