@@ -1,6 +1,6 @@
 // ===== 1. SUPABASE SETUP: paste YOUR values here =====
-const SUPABASE_URL = "https://acqqbhaoukjarnijhgte.supabase.co";
-const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 // (never paste the secret / service_role key here)
 
 const { createClient } = supabase;
@@ -324,6 +324,7 @@ autoBtn.addEventListener("click", function () {
   navigator.geolocation.getCurrentPosition(
     function (position) {
       autoBtn.disabled = false;
+      if (!mapBox.classList.contains("open")) return;
 
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
@@ -343,11 +344,23 @@ autoBtn.addEventListener("click", function () {
     },
     function () {
       autoBtn.disabled = false;
-      locationStatus.textContent = "Could not detect location. Allow location access, or tap the map to place the pin.";
+      if (!mapBox.classList.contains("open")) return;
+      locationStatus.textContent = "Could not detect location. Allow location access, tap the map to place the pin, or press ✕ to skip.";
     },
     { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
   );
 });
+
+// ✕ button: close the map and skip the location
+const mapCloseBtn = document.getElementById("mapCloseBtn");
+if (mapCloseBtn) {
+  mapCloseBtn.addEventListener("click", function () {
+    if (map) resetMap();
+    pickedLocation = null;
+    autoBtn.disabled = false;
+    locationStatus.textContent = "Location skipped. Your post will have no map location.";
+  });
+}
 
 // ===== 11. WHATSAPP, SHARE, PHOTO VIEWER =====
 // Turns what the user typed into digits only, with country code.
