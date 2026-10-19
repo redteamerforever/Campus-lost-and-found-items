@@ -1,492 +1,513 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+ 
+/* =========================================================
+   Campus Lost & Found: stylesheet
+   All class names match the previous version, so script.js
+   and index.html keep working without changes.
+   ========================================================= */
+ 
+/* ----- Design tokens (light) ----- */
+:root {
+  --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --w: 440px;                       /* width of the single-column layout */
+ 
+  --ink: #1d2140;
+  --ink-soft: #5d6283;
+  --surface: rgba(255, 255, 255, 0.92);
+  --field: #f3f4fb;
+  --field-border: #d9dcee;
+  --divider: rgba(29, 33, 64, 0.12);
+ 
+  --brand: #7a56f0;
+  --brand-2: #4f8df5;
+  --lost: #e8415f;
+  --found: #14a56c;
+  --info: #1fa8e0;
+  --warn: #f2a23a;
+ 
+  --shadow: 0 10px 28px rgba(38, 28, 90, 0.2);
+  --shadow-sm: 0 4px 14px rgba(38, 28, 90, 0.16);
+  --ring: 0 0 0 3px rgba(122, 86, 240, 0.45);
+}
+ 
+/* ----- Design tokens (dark) ----- */
+body.dark {
+  --ink: #eceef9;
+  --ink-soft: #a8acc9;
+  --surface: rgba(27, 29, 52, 0.9);
+  --field: #282b49;
+  --field-border: #444876;
+  --divider: rgba(236, 238, 249, 0.14);
+ 
+  --brand: #a78bff;
+  --lost: #ff6b86;
+  --found: #3fd49a;
+ 
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+ 
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+ 
 /* ----- Page: animated RGB gradient background ----- */
 body {
-  font-family: Arial, sans-serif;
   margin: 0;
-  padding: 16px;
+  padding: 16px 16px 90px;
   min-height: 100vh;
   box-sizing: border-box;
+  font-family: var(--font);
+  color: var(--ink);
+  line-height: 1.45;
   background: linear-gradient(
     135deg,
     rgb(255, 94, 98),
-    rgb(255, 195, 113),
+    rgb(255, 160, 110),
     rgb(72, 198, 239),
     rgb(111, 134, 214),
-    rgb(180, 92, 255)
+    rgb(160, 92, 255)
   );
   background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
+  animation: gradientShift 18s ease infinite;
 }
-
+ 
+body.dark {
+  background: linear-gradient(
+    135deg,
+    rgb(20, 20, 40),
+    rgb(22, 33, 62),
+    rgb(15, 52, 96),
+    rgb(83, 52, 131)
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 18s ease infinite;
+}
+ 
 @keyframes gradientShift {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-
+ 
 [hidden] {
   display: none !important;
 }
-
+ 
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+ 
 /* ----- Hero ----- */
 .hero {
   position: relative;
-  max-width: 400px;
+  max-width: var(--w);
   margin: 0 auto;
+  padding-top: 6px;
   text-align: center;
 }
-
+ 
 .hero h1 {
-  margin: 8px 0 4px;
-  color: rgb(255, 255, 255);
-  font-size: 30px;
+  margin: 8px 0 6px;
+  color: #fff;
+  font-size: clamp(30px, 8vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+ 
+.tagline {
+  margin: 0 auto 20px;
+  max-width: 34ch;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 15px;
+  font-weight: 500;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
-
-.tagline {
-  margin: 0 0 16px;
-  color: rgb(255, 255, 255);
-  font-size: 15px;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
+ 
 .cta {
-  padding: 14px 28px;
+  padding: 15px 30px;
   border: none;
-  border-radius: 30px;
-  background: rgb(255, 255, 255);
-  color: rgb(180, 92, 255);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brand);
+  font-family: inherit;
   font-size: 17px;
-  font-weight: bold;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-
+ 
 .cta:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
 }
-
+ 
+.cta:active {
+  transform: scale(0.97);
+}
+ 
+body.dark .cta {
+  background: rgb(236, 238, 249);
+  color: rgb(83, 52, 131);
+}
+ 
+/* ----- Dark mode toggle ----- */
 .theme-btn {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 1500;
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border: none;
   border-radius: 50%;
-  background: rgb(255, 255, 255);
+  background: #fff;
   font-size: 22px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
 }
-
+ 
+.theme-btn:hover {
+  transform: rotate(-12deg) scale(1.06);
+}
+ 
 body.dark .theme-btn {
-  background: rgb(60, 60, 90);
+  background: rgb(60, 60, 96);
 }
-
+ 
 /* ----- Counters ----- */
 .stat-cards {
   display: flex;
   gap: 10px;
-  max-width: 400px;
-  margin: 20px auto 0;
+  max-width: var(--w);
+  margin: 22px auto 0;
 }
-
+ 
 .stat-card {
   flex: 1;
-  padding: 12px 6px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.88);
+  padding: 14px 6px 12px;
+  border-radius: 18px;
+  background: var(--surface);
   text-align: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-
+ 
 .stat-num {
   display: block;
-  font-size: 28px;
-  font-weight: bold;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
-
+ 
 .stat-label {
   font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
-
+ 
 /* ----- How it works ----- */
 .steps {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px 14px;
-  max-width: 400px;
-  margin: 16px auto 0;
+  max-width: var(--w);
+  margin: 18px auto 0;
   padding: 0;
   list-style: none;
-  color: rgb(255, 255, 255);
+  color: #fff;
   font-size: 13px;
+  font-weight: 600;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
-
+ 
 .steps b {
   display: inline-block;
-  width: 20px;
-  height: 20px;
-  margin-right: 4px;
+  width: 21px;
+  height: 21px;
+  margin-right: 5px;
   border-radius: 50%;
-  background: rgb(255, 255, 255);
-  color: rgb(180, 92, 255);
+  background: #fff;
+  color: var(--brand);
   text-align: center;
-  line-height: 20px;
+  line-height: 21px;
   text-shadow: none;
 }
-
-/* ----- Cards ----- */
-.card {
-  background: rgba(255, 255, 255, 0.88);
-  border-radius: 25px;
-  border-top: 8px solid rgb(255, 94, 98);
-  padding: 16px;
-  max-width: 400px;
-  margin: 16px auto;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+ 
+body.dark .steps b {
+  background: rgb(236, 238, 249);
+  color: rgb(83, 52, 131);
 }
-
+ 
+/* =========================================================
+   POST CARDS
+   Looks like a pinned notice: a coloured edge shows at a
+   glance whether the item is Lost (red) or Found (green).
+   ========================================================= */
+.card {
+  --accent: var(--brand);
+  position: relative;
+  overflow: hidden;
+  max-width: var(--w);
+  margin: 16px auto;
+  padding: 18px 18px 18px 22px;
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+ 
+/* coloured edge */
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  background: var(--accent);
+}
+ 
+/* colour follows the type of the post */
+.card:has(.tag.lost)  { --accent: var(--lost); }
+.card:has(.tag.found) { --accent: var(--found); }
+ 
 .card.pop {
   animation: popIn 0.4s ease both;
 }
-
+ 
 @keyframes popIn {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-/* each card gets a different top colour */
-.card:nth-child(4n + 1) { border-top-color: rgb(255, 94, 98); }
-.card:nth-child(4n + 2) { border-top-color: rgb(72, 198, 239); }
-.card:nth-child(4n + 3) { border-top-color: rgb(255, 195, 113); }
-.card:nth-child(4n + 4) { border-top-color: rgb(180, 92, 255); }
-
+ 
+.card h2,
+.card h3,
+.card h4 {
+  margin: 12px 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+ 
+.card p {
+  margin: 6px 0;
+}
+ 
+/* Lost / Found badge */
 .tag {
-  padding: 4px 10px;
-  border-radius: 6px;
-  color: rgb(255, 255, 255);
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: #fff;
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
-
-.lost  { background: rgb(220, 20, 60); }
-.found { background: rgb(46, 139, 87); }
-
+ 
+.lost  { background: var(--lost); }
+.found { background: var(--found); }
+ 
+body.dark .tag.lost,
+body.dark .tag.found {
+  color: rgb(20, 20, 40);
+}
+ 
 .cat-chip {
+  display: inline-block;
   margin-left: 6px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgb(235, 235, 245);
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--field);
+  border: 1px solid var(--field-border);
+  color: var(--ink);
   font-size: 12px;
+  font-weight: 600;
 }
-
-/* ----- Form ----- */
-.post-form {
-  background: rgba(255, 255, 255, 0.88);
-  border-radius: 25px;
-  padding: 16px;
-  max-width: 400px;
-  margin: 16px auto;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+ 
+.item-desc {
+  margin: 8px 0;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
-
-.post-form input,
-.post-form select,
-.post-form button {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  box-sizing: border-box;
-  font-size: 16px;
-  border-radius: 10px;
-  border: 1px solid rgb(200, 200, 200);
+ 
+.place-line {
+  font-weight: 700;
 }
-
-.post-form button {
-  background: linear-gradient(90deg, rgb(255, 94, 98), rgb(180, 92, 255), rgb(72, 198, 239));
-  color: rgb(255, 255, 255);
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.post-form button:hover {
-  opacity: 0.9;
-}
-
-.note {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: rgb(110, 110, 110);
-}
-
-/* ----- Photo buttons (camera / gallery) ----- */
-.photo-label {
-  margin: 14px 0 0;
-  font-size: 14px;
-  color: rgb(90, 90, 90);
-}
-
-.photo-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.pick-btn {
-  flex: 1;
-  text-align: center;
-  padding: 10px;
-  border-radius: 10px;
-  background: rgb(240, 240, 255);
-  border: 1px solid rgb(180, 180, 220);
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.post-form input.hidden-input {
-  display: none;
-}
-
-.status {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: rgb(46, 139, 87);
-}
-
-/* ----- Location buttons (auto-detect / pin) ----- */
-.post-form .loc-btn {
-  flex: 1;
-  margin-top: 0;
-  background: rgb(240, 255, 245);
-  color: rgb(30, 100, 60);
-  border: 1px solid rgb(150, 210, 170);
-  font-weight: bold;
-  font-size: 15px;
-}
-
-/* ----- Map picker (inside the form) ----- */
-.map-box {
-  display: none;
-  margin-top: 10px;
-}
-
-.map-box.open {
-  display: block;
-}
-
-#pickMap {
-  height: 300px;
-  border-radius: 12px;
-  border: 1px solid rgb(200, 200, 200);
-}
-
-.map-hint {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: rgb(90, 90, 90);
-}
-
-/* ----- Search, filters, sort, tabs ----- */
-.toolbar {
-  max-width: 400px;
-  margin: 20px auto 16px;
-}
-
-.toolbar input,
-.toolbar select {
-  padding: 12px 16px;
-  box-sizing: border-box;
-  font-size: 15px;
-  border: none;
-  border-radius: 25px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-
-.toolbar input {
-  display: block;
-  width: 100%;
-  font-size: 16px;
-}
-
-.toolbar .row {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.toolbar .row select {
-  flex: 1;
-  min-width: 0;
-}
-
-.chips,
-.view-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.chip,
-.tab {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.55);
-  color: rgb(60, 60, 60);
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.chip.active,
-.tab.active {
-  background: rgb(255, 255, 255);
-  color: rgb(180, 92, 255);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-}
-
-/* ----- Map view of all posts ----- */
-.view-map-box {
-  max-width: 700px;
-  margin: 16px auto;
-}
-
-#viewMap {
-  height: 60vh;
-  min-height: 340px;
-  border-radius: 20px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-
+ 
 /* ----- Photo on a card ----- */
 .item-photo {
+  display: block;
   width: 100%;
-  max-height: 250px;
+  max-height: 260px;
+  margin-top: 12px;
   object-fit: cover;
-  border-radius: 15px;
-  margin-top: 10px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   cursor: zoom-in;
 }
-
-/* ----- Map link and share on a card ----- */
+ 
+/* ----- Small info lines on a card ----- */
+.expiry {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+ 
+.expiry.soon {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(232, 65, 95, 0.12);
+  color: var(--lost);
+  font-weight: 700;
+}
+ 
+/* ----- Card actions: map link, share ----- */
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 12px;
 }
-
+ 
 .map-link {
   display: inline-block;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgb(72, 198, 239);
-  color: rgb(255, 255, 255);
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--info);
+  color: #fff;
   text-decoration: none;
   font-size: 14px;
+  font-weight: 700;
 }
-
+ 
 .share-btn {
-  padding: 8px 14px;
-  border: 2px solid rgb(111, 134, 214);
-  border-radius: 10px;
-  background: none;
-  color: rgb(111, 134, 214);
+  padding: 10px 16px;
+  border: 2px solid var(--brand);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--brand);
+  font-family: inherit;
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
 }
-
-/* ----- WhatsApp button on a card ----- */
+ 
+.map-link:hover,
+.share-btn:hover {
+  opacity: 0.88;
+}
+ 
+/* ----- WhatsApp button (the main action) ----- */
 .wa-btn {
   display: block;
-  margin-top: 12px;
-  padding: 10px;
-  border-radius: 10px;
-  background: rgb(37, 211, 102);
-  color: rgb(255, 255, 255);
+  margin-top: 14px;
+  padding: 13px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #25d366, #12b050);
+  color: #fff;
   text-align: center;
   text-decoration: none;
-  font-size: 15px;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(18, 176, 80, 0.35);
+  transition: transform 0.12s ease;
 }
-
+ 
 .wa-btn:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
 }
-
-/* ----- Small info lines on a card ----- */
-.expiry {
-  font-size: 13px;
-  color: rgb(110, 110, 110);
+ 
+.wa-btn:active {
+  transform: scale(0.98);
 }
-
-.expiry.soon {
-  color: rgb(220, 20, 60);
-  font-weight: bold;
-}
-
-/* ----- Delete button on a card ----- */
+ 
+/* ----- Delete (kept quiet so it is not tapped by mistake) ----- */
 .delete-btn {
   display: block;
   width: 100%;
-  margin-top: 12px;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: rgb(220, 20, 60);
-  color: rgb(255, 255, 255);
-  font-size: 15px;
-  font-weight: bold;
+  margin-top: 10px;
+  padding: 11px;
+  border: 2px solid rgba(232, 65, 95, 0.55);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--lost);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
-
+ 
 .delete-btn:hover {
-  opacity: 0.9;
+  background: var(--lost);
+  border-color: var(--lost);
+  color: #fff;
 }
-
+ 
 /* ----- Solved cases ----- */
 .card.solved {
-  border-top-color: rgb(46, 139, 87) !important;
-  opacity: 0.9;
+  --accent: var(--found);
 }
-
+ 
+.card.solved::before {
+  background: var(--found);
+}
+ 
+.card.solved .item-photo {
+  filter: grayscale(0.35);
+}
+ 
 .solved-banner {
-  margin-bottom: 8px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgb(46, 139, 87);
-  color: rgb(255, 255, 255);
-  font-weight: bold;
+  margin-bottom: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #14a56c, #0f8a5a);
+  color: #fff;
+  font-weight: 800;
   text-align: center;
 }
-
+ 
 .solve-btn,
 .reopen-btn {
   display: block;
   width: 100%;
-  margin-top: 12px;
-  padding: 10px;
+  margin-top: 10px;
+  padding: 12px;
   border: none;
-  border-radius: 10px;
-  color: rgb(255, 255, 255);
+  border-radius: 12px;
+  color: #fff;
+  font-family: inherit;
   font-size: 15px;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
 }
-
-.solve-btn  { background: rgb(46, 139, 87); }
-.reopen-btn { background: rgb(120, 120, 140); }
-
+ 
+.solve-btn  { background: var(--found); }
+.reopen-btn { background: rgb(120, 124, 150); }
+ 
+.solve-btn:hover,
+.reopen-btn:hover {
+  opacity: 0.9;
+}
+ 
+body.dark .solve-btn {
+  color: rgb(15, 30, 25);
+}
+ 
 .confetti {
   position: fixed;
   top: -30px;
@@ -495,11 +516,338 @@ body.dark .theme-btn {
   z-index: 2000;
   animation: fall 2.5s linear forwards;
 }
-
+ 
 @keyframes fall {
   to { transform: translateY(110vh) rotate(360deg); opacity: 0.8; }
 }
-
+ 
+/* =========================================================
+   POST FORM
+   ========================================================= */
+.post-form {
+  max-width: var(--w);
+  margin: 18px auto;
+  padding: 20px 18px;
+  border-radius: 24px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+ 
+.post-form h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+ 
+.post-form input,
+.post-form select,
+.post-form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--field-border);
+  border-radius: 12px;
+  background: var(--field);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+ 
+.post-form input::placeholder,
+.post-form textarea::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+ 
+.post-form input:focus,
+.post-form select:focus,
+.post-form textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--ring);
+}
+ 
+.post-form textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+ 
+.post-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%238a8fb0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+ 
+/* browser autofill (the light boxes in dark mode) */
+.post-form input:-webkit-autofill,
+.post-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  box-shadow: 0 0 0 1000px var(--field) inset;
+  caret-color: var(--ink);
+  transition: background-color 9999s ease-in-out 0s;
+}
+ 
+.post-form input.hidden-input {
+  display: none;
+}
+ 
+/* Post button */
+.post-form button[type="submit"] {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgb(255, 94, 98), rgb(160, 92, 255), rgb(72, 150, 245));
+  color: #fff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(122, 86, 240, 0.35);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+ 
+.post-form button[type="submit"]:hover {
+  opacity: 0.93;
+}
+ 
+.post-form button[type="submit"]:active {
+  transform: scale(0.98);
+}
+ 
+.note {
+  margin: 6px 2px 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+ 
+/* ----- Photo buttons (camera / gallery) ----- */
+.photo-label {
+  margin: 18px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+ 
+.photo-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+ 
+.pick-btn {
+  flex: 1;
+  padding: 12px 10px;
+  box-sizing: border-box;
+  border: 1.5px dashed var(--field-border);
+  border-radius: 12px;
+  background: var(--field);
+  color: var(--ink);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+ 
+.pick-btn:hover {
+  border-color: var(--brand);
+}
+ 
+.status {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--found);
+}
+ 
+/* ----- Location buttons (auto-detect / pin) ----- */
+.post-form .loc-btn {
+  flex: 1;
+  margin-top: 0;
+  padding: 12px 10px;
+  border: 1.5px solid rgba(20, 165, 108, 0.45);
+  border-radius: 12px;
+  background: rgba(20, 165, 108, 0.1);
+  color: var(--found);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+ 
+.post-form .loc-btn:hover {
+  background: rgba(20, 165, 108, 0.18);
+}
+ 
+/* ----- Map picker (inside the form) ----- */
+.map-box {
+  display: none;
+  margin-top: 12px;
+}
+ 
+.map-box.open {
+  display: block;
+}
+ 
+#pickMap {
+  height: 300px;
+  border-radius: 14px;
+  border: 1.5px solid var(--field-border);
+}
+ 
+.map-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+ 
+.post-form .map-close {
+  display: block;
+  width: 38px;
+  height: 38px;
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--lost);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+ 
+.map-hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+ 
+/* =========================================================
+   SEARCH, FILTERS, SORT, TABS
+   ========================================================= */
+.toolbar {
+  max-width: var(--w);
+  margin: 22px auto 16px;
+}
+ 
+.toolbar input,
+.toolbar select {
+  box-sizing: border-box;
+  padding: 13px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+  box-shadow: var(--shadow-sm);
+}
+ 
+.toolbar input {
+  display: block;
+  width: 100%;
+  font-size: 16px;
+}
+ 
+.toolbar input::placeholder {
+  color: var(--ink-soft);
+}
+ 
+.toolbar select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%238a8fb0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+ 
+.toolbar .row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+ 
+.toolbar .row select {
+  flex: 1;
+  min-width: 0;
+}
+ 
+.chips,
+.view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+ 
+.chip,
+.tab {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  color: rgb(50, 50, 75);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+ 
+.chip:hover,
+.tab:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+ 
+.chip.active,
+.tab.active {
+  background: #fff;
+  color: var(--brand);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+ 
+/* ----- Map view of all posts ----- */
+.view-map-box {
+  max-width: 720px;
+  margin: 16px auto;
+}
+ 
+#viewMap {
+  height: 60vh;
+  min-height: 340px;
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+}
+ 
+/* Leaflet popups match the cards */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  font-family: var(--font);
+}
+ 
+/* =========================================================
+   MISC
+   ========================================================= */
+ 
 /* ----- Photo viewer ----- */
 .lightbox {
   position: fixed;
@@ -508,16 +856,16 @@ body.dark .theme-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.88);
   cursor: zoom-out;
 }
-
+ 
 .lightbox img {
   max-width: 95vw;
   max-height: 90vh;
-  border-radius: 12px;
+  border-radius: 14px;
 }
-
+ 
 /* ----- Pop-up messages ----- */
 .toasts {
   position: fixed;
@@ -531,172 +879,72 @@ body.dark .theme-btn {
   transform: translateX(-50%);
   pointer-events: none;
 }
-
+ 
 .toast {
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: rgb(40, 40, 55);
-  color: rgb(255, 255, 255);
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: rgb(40, 40, 58);
+  color: #fff;
   font-size: 14px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font-weight: 600;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38);
   animation: toastIn 0.25s ease, toastOut 0.4s ease 3s forwards;
 }
-
-.toast.success { background: rgb(46, 139, 87); }
-.toast.error   { background: rgb(220, 20, 60); }
-
+ 
+.toast.success { background: rgb(18, 140, 90); }
+.toast.error   { background: rgb(210, 40, 70); }
+ 
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
+ 
 @keyframes toastOut {
   to { opacity: 0; transform: translateY(12px); }
 }
-
+ 
 /* ----- Feed status and footer ----- */
 .feed-status {
   text-align: center;
-  color: rgb(255, 255, 255);
-  font-weight: bold;
+  color: #fff;
+  font-weight: 700;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
-
+ 
 .footer {
   margin: 30px auto 10px;
   text-align: center;
-  color: rgb(255, 255, 255);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 13px;
+  font-weight: 500;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
-
-/* ===== DARK MODE ===== */
-body.dark {
-  background: linear-gradient(
-    135deg,
-    rgb(26, 26, 46),
-    rgb(22, 33, 62),
-    rgb(15, 52, 96),
-    rgb(83, 52, 131)
-  );
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
+ 
+/* =========================================================
+   LARGER SCREENS: feed becomes two columns
+   ========================================================= */
+@media (min-width: 820px) {
+  #feed {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+ 
+  #feed .card {
+    max-width: none;
+    margin: 0;
+  }
 }
-
-body.dark .card,
-body.dark .post-form,
-body.dark .stat-card {
-  background: rgba(30, 30, 48, 0.92);
-  color: rgb(235, 235, 245);
-}
-
-body.dark .post-form input,
-body.dark .post-form select,
-body.dark .post-form textarea {
-  background: rgb(45, 45, 65);
-  color: rgb(235, 235, 245);
-  border-color: rgb(80, 80, 110);
-}
-
-body.dark .pick-btn {
-  background: rgb(45, 45, 65);
-  color: rgb(235, 235, 245);
-  border-color: rgb(80, 80, 110);
-}
-
-body.dark .post-form .loc-btn {
-  background: rgb(35, 60, 50);
-  color: rgb(150, 230, 180);
-  border-color: rgb(60, 110, 85);
-}
-
-body.dark .photo-label,
-body.dark .note,
-body.dark .map-hint,
-body.dark .expiry {
-  color: rgb(170, 170, 190);
-}
-
-body.dark .expiry.soon {
-  color: rgb(255, 120, 140);
-}
-
-body.dark .toolbar input,
-body.dark .toolbar select {
-  background: rgb(40, 40, 60);
-  color: rgb(235, 235, 245);
-}
-
-body.dark .chip,
-body.dark .tab {
-  background: rgba(255, 255, 255, 0.15);
-  color: rgb(255, 255, 255);
-}
-
-body.dark .chip.active,
-body.dark .tab.active {
-  background: rgb(255, 255, 255);
-  color: rgb(180, 92, 255);
-}
-
-body.dark .cat-chip {
-  background: rgb(60, 60, 90);
-  color: rgb(235, 235, 245);
-}
-
-/* ----- Description ----- */
-.post-form textarea {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  box-sizing: border-box;
-  font-size: 16px;
-  font-family: Arial, sans-serif;
-  border-radius: 10px;
-  border: 1px solid rgb(200, 200, 200);
-  resize: vertical;
-}
-
-.item-desc {
-  margin: 8px 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-body.dark .post-form textarea {
-  background: rgb(45, 45, 65);
-  color: rgb(235, 235, 245);
-  border-color: rgb(80, 80, 110);
-}
-
-.place-line {
-  font-weight: bold;
-}
-
-/* ----- Close (✕) button on the location map ----- */
-.map-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: rgb(90, 90, 90);
-}
-
-.post-form .map-close {
-  width: 36px;
-  height: 36px;
-  margin-top: 0;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgb(220, 20, 60);
-  color: rgb(255, 255, 255);
-  font-size: 18px;
-  line-height: 1;
-}
-
-body.dark .map-head {
-  color: rgb(170, 170, 190);
+ 
+/* ----- Respect "reduce motion" ----- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
