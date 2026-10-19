@@ -4,6 +4,7 @@ This is a project made by 1 sem student where this project is still in developme
 IN BRIEF;
 
 1.To post an item;
+
   Choose Lost or Found options depending on your case.
   
 2.Choose the Category of item lost or found by user for ex ()
@@ -19,12 +20,13 @@ IN BRIEF;
 7.Add Photo of the item Lost or Found.
 
 8.Add Location (Optional) such that it is easy to reach the place its Lost or Found.
-  .We have Two options One is Auto Detect Location and Other is Self Pin Location.
+
+  We have Two options One is Auto Detect Location and Other is Self Pin Location.
   
-.And The user clicks on post and It gets posted.
+And The user clicks on post and It gets posted.
 
-.AND THEN WE ALSO HAVE FEATURES LIKE (SEARCH THE ITEM) and (FILTER) and (SORTING).
+AND THEN WE ALSO HAVE FEATURES LIKE (SEARCH THE ITEM) and (FILTER) and (SORTING).
 
-.WE ALSO HAVE LISTS (WHERE USER CAN SEE ACTIVE POSTS) AND MAPS (WHERE USER FINDS THE LOCATION OF THE ITEMS WHICH HAVE GPS PINNED WHILE POSTING).
+WE ALSO HAVE LISTS (WHERE USER CAN SEE ACTIVE POSTS) AND MAPS (WHERE USER FINDS THE LOCATION OF THE ITEMS WHICH HAVE GPS PINNED WHILE POSTING).
 
 
