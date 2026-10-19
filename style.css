@@ -636,3 +636,29 @@ body.dark .cat-chip {
   background: rgb(60, 60, 90);
   color: rgb(235, 235, 245);
 }
+
+/* ----- Description ----- */
+.post-form textarea {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  box-sizing: border-box;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  border-radius: 10px;
+  border: 1px solid rgb(200, 200, 200);
+  resize: vertical;
+}
+
+.item-desc {
+  margin: 8px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+body.dark .post-form textarea {
+  background: rgb(45, 45, 65);
+  color: rgb(235, 235, 245);
+  border-color: rgb(80, 80, 110);
+}
