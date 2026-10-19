@@ -669,3 +669,7 @@ body.dark .post-form textarea {
   color: rgb(235, 235, 245);
   border-color: rgb(80, 80, 110);
 }
+
+.place-line {
+  font-weight: bold;
+}
