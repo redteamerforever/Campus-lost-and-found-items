@@ -1,17 +1,19 @@
 // ===== 1. SUPABASE SETUP: paste YOUR values here =====
-const SUPABASE_URL = "https://acqqbhaoukjarnijhgte.supabase.co";
-const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 // (never paste the secret / service_role key here)
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ===== 2. PAGE ELEMENTS =====
-const form = document.querySelector(".post-form:not(#loginBox)");
+const form = document.querySelector(".post-form");
 const postBtn = form.querySelector('button[type="submit"]');
 const feed = document.getElementById("feed");
 const feedStatus = document.getElementById("feedStatus");
 const statsBox = document.getElementById("stats");
+const searchInput = document.getElementById("searchInput");
+const chips = document.querySelectorAll(".chip");
 const cameraInput = document.getElementById("cameraPhoto");
 const galleryInput = document.getElementById("galleryPhoto");
 const photoStatus = document.getElementById("photoStatus");
@@ -20,158 +22,25 @@ const pinBtn = document.getElementById("pinBtn");
 const locationStatus = document.getElementById("locationStatus");
 const mapBox = document.getElementById("mapBox");
 
-const authBar = document.getElementById("authBar");
-const loginBox = document.getElementById("loginBox");
-const stepEmail = document.getElementById("stepEmail");
-const stepCode = document.getElementById("stepCode");
-const loginEmail = document.getElementById("loginEmail");
-const loginCode = document.getElementById("loginCode");
-const sendCodeBtn = document.getElementById("sendCodeBtn");
-const verifyBtn = document.getElementById("verifyBtn");
-const backBtn = document.getElementById("backBtn");
-const loginStatus = document.getElementById("loginStatus");
-
-const chatModal = document.getElementById("chatModal");
-const chatTitle = document.getElementById("chatTitle");
-const chatClose = document.getElementById("chatClose");
-const threadList = document.getElementById("threadList");
-const chatMessages = document.getElementById("chatMessages");
-const chatForm = document.getElementById("chatForm");
-const chatInput = document.getElementById("chatInput");
-
 let items = [];            // posts loaded from Supabase
-let itemsLoaded = false;   // true after the first load
-let currentUser = null;    // the signed-in (email) user, or null
-let isAdmin = false;       // true if the signed-in user is an admin
+let currentUserId = null;  // this browser's anonymous user id
 let selectedFile = null;   // photo chosen by the user
 let pickedLocation = null; // pin {lat, lng}
-let pendingEmail = "";     // email we sent a code to
+let filterType = "all";    // all | lost | found | solved
+let searchText = "";       // what is typed in the search box
 
-// ===== 3. SIGN IN WITH EMAIL CODE =====
-function updateAuthUI() {
-  authBar.innerHTML = "";
-
-  if (currentUser) {
-    const who = document.createElement("span");
-    who.textContent = "Signed in: " + currentUser.email + (isAdmin ? " (admin)" : "");
-
-    const outBtn = document.createElement("button");
-    outBtn.type = "button";
-    outBtn.textContent = "Log out";
-    outBtn.addEventListener("click", function () {
-      db.auth.signOut();
-    });
-
-    authBar.append(who, outBtn);
-    loginBox.hidden = true;
-    form.hidden = false;
-  } else {
-    const inBtn = document.createElement("button");
-    inBtn.type = "button";
-    inBtn.textContent = "Sign in to post or chat";
-    inBtn.addEventListener("click", function () {
-      loginBox.hidden = false;
-      loginBox.scrollIntoView({ behavior: "smooth" });
-    });
-
-    authBar.append(inBtn);
-    form.hidden = true;
+// ===== 3. SIGN IN (anonymous, automatic, nothing to see) =====
+async function ensureSignedIn() {
+  const { data } = await db.auth.getSession();
+  if (data.session) {
+    currentUserId = data.session.user.id;
+    return;
   }
+
+  const result = await db.auth.signInAnonymously();
+  if (result.error) throw result.error;
+  currentUserId = result.data.user.id;
 }
-
-function resetLoginSteps() {
-  stepEmail.hidden = false;
-  stepCode.hidden = true;
-  loginCode.value = "";
-  loginStatus.textContent = "";
-}
-
-async function checkAdmin() {
-  isAdmin = false;
-  if (currentUser) {
-    const { data } = await db.rpc("is_admin");
-    isAdmin = data === true;
-  }
-  updateAuthUI();
-  if (itemsLoaded) render();
-}
-
-db.auth.onAuthStateChange(function (event, session) {
-  const u = session ? session.user : null;
-  currentUser = u && !u.is_anonymous ? u : null;
-  isAdmin = false;
-
-  updateAuthUI();
-  if (!currentUser) {
-    closeChat();
-    resetLoginSteps();
-  }
-  if (itemsLoaded) render();
-
-  setTimeout(checkAdmin, 0);
-});
-
-sendCodeBtn.addEventListener("click", async function () {
-  const email = loginEmail.value.trim();
-  if (!email || !email.includes("@")) {
-    loginStatus.textContent = "Please enter a valid email.";
-    return;
-  }
-
-  sendCodeBtn.disabled = true;
-  loginStatus.textContent = "Sending code...";
-
-  const { error } = await db.auth.signInWithOtp({
-    email: email,
-    options: {
-      shouldCreateUser: true,
-      emailRedirectTo: window.location.origin
-    }
-  });
-
-  sendCodeBtn.disabled = false;
-
-  if (error) {
-    loginStatus.textContent = "Could not send code: " + error.message;
-    return;
-  }
-
-  pendingEmail = email;
-  stepEmail.hidden = true;
-  stepCode.hidden = false;
-  loginStatus.textContent = "Code sent to " + email + ". Check your inbox and spam folder.";
-});
-
-verifyBtn.addEventListener("click", async function () {
-  const code = loginCode.value.trim();
-  if (!code) {
-    loginStatus.textContent = "Enter the code from your email.";
-    return;
-  }
-
-  verifyBtn.disabled = true;
-  loginStatus.textContent = "Checking...";
-
-  const { error } = await db.auth.verifyOtp({
-    email: pendingEmail,
-    token: code,
-    type: "email"
-  });
-
-  verifyBtn.disabled = false;
-
-  if (error) {
-    loginStatus.textContent = "Wrong or expired code. " + error.message;
-    return;
-  }
-
-  loginStatus.textContent = "";
-  loginEmail.value = "";
-  resetLoginSteps();
-  // onAuthStateChange now updates the page
-});
-
-backBtn.addEventListener("click", resetLoginSteps);
 
 // ===== 4. LOAD POSTS =====
 async function loadItems() {
@@ -182,7 +51,6 @@ async function loadItems() {
 
   if (error) throw error;
   items = data;
-  itemsLoaded = true;
   render();
 }
 
@@ -354,7 +222,26 @@ autoBtn.addEventListener("click", function () {
   );
 });
 
-// ===== 8. DELETE, AND MARK AS SOLVED =====
+// ===== 8. WHATSAPP HELPERS =====
+// Turns what the user typed into digits only, with country code.
+// A 10-digit number is treated as an Indian number (+91).
+function cleanWhatsApp(raw) {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  if (digits.length === 10) digits = "91" + digits;
+  if (digits.length < 10 || digits.length > 15) return null;
+  return digits;
+}
+
+// Link that opens WhatsApp with a ready-made message
+function whatsappLink(item) {
+  const text = item.type === "lost"
+    ? 'Hi, I saw your LOST post "' + item.title + '" on Campus Lost & Found. I think I may have found it.'
+    : 'Hi, I saw your FOUND post "' + item.title + '" on Campus Lost & Found. I think it may be mine.';
+  return "https://wa.me/" + item.whatsapp + "?text=" + encodeURIComponent(text);
+}
+
+// ===== 9. DELETE, MARK AS SOLVED, CONFETTI =====
 async function deleteItem(id) {
   const sure = confirm("Delete this post? This cannot be undone.");
   if (!sure) return;
@@ -399,226 +286,71 @@ function celebrate() {
   }
 }
 
-// ===== 9. CHAT =====
-let chatItem = null;        // the item being chatted about
-let chatThreadUser = null;  // the visitor id that identifies the thread
-let chatChannel = null;     // live updates
-let shownIds = new Set();   // message ids already on screen
-let knownThreads = [];      // thread ids (owner/admin view)
-
-// owner or admin: can see every conversation about the item
-function isChatOwner() {
-  return chatItem && currentUser && (chatItem.owner_id === currentUser.id || isAdmin);
-}
-
-// the real owner: the only one (besides the visitor) who can send messages
-function isRealOwner() {
-  return chatItem && currentUser && chatItem.owner_id === currentUser.id;
-}
-
-function addMessage(m) {
-  if (shownIds.has(m.id)) return;
-  shownIds.add(m.id);
-
-  const bubble = document.createElement("div");
-  bubble.className = "msg " + (m.sender_id === currentUser.id ? "mine" : "theirs");
-  bubble.textContent = m.body;
-  bubble.title = new Date(m.created_at).toLocaleString();
-  chatMessages.append(bubble);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-async function loadMessages() {
-  chatMessages.innerHTML = "";
-  shownIds = new Set();
-
-  const { data, error } = await db
-    .from("messages")
-    .select("*")
-    .eq("item_id", chatItem.id)
-    .eq("thread_user_id", chatThreadUser)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    chatMessages.textContent = "Could not load messages: " + error.message;
-    return;
-  }
-
-  if (data.length === 0) {
-    const empty = document.createElement("p");
-    empty.className = "chat-empty";
-    empty.textContent = isChatOwner() ? "No messages in this conversation yet." : "Say hello! Ask about this item.";
-    chatMessages.append(empty);
-  }
-
-  data.forEach(addMessage);
-}
-
-function buildThreadList() {
-  threadList.innerHTML = "";
-
-  knownThreads.forEach(function (id, index) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "thread-btn" + (id === chatThreadUser ? " active" : "");
-    btn.textContent = "Conversation " + (index + 1);
-    btn.addEventListener("click", function () {
-      chatThreadUser = id;
-      chatForm.hidden = !isRealOwner();
-      buildThreadList();
-      loadMessages();
-    });
-    threadList.append(btn);
-  });
-}
-
-async function loadThreads() {
-  const { data, error } = await db
-    .from("messages")
-    .select("thread_user_id, created_at")
-    .eq("item_id", chatItem.id)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    chatMessages.textContent = "Could not load conversations: " + error.message;
-    return;
-  }
-
-  knownThreads = [];
-  data.forEach(function (m) {
-    if (!knownThreads.includes(m.thread_user_id)) knownThreads.push(m.thread_user_id);
-  });
-
-  threadList.hidden = false;
-  buildThreadList();
-
-  if (knownThreads.length === 0) {
-    const empty = document.createElement("p");
-    empty.className = "chat-empty";
-    empty.textContent = "No one has messaged about this item yet.";
-    chatMessages.append(empty);
-  }
-}
-
-function subscribeChat() {
-  unsubscribeChat();
-
-  chatChannel = db
-    .channel("chat-" + chatItem.id)
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "messages", filter: "item_id=eq." + chatItem.id },
-      function (payload) {
-        const m = payload.new;
-
-        if (m.thread_user_id === chatThreadUser) {
-          const empty = chatMessages.querySelector(".chat-empty");
-          if (empty) empty.remove();
-          addMessage(m);
-        } else if (isChatOwner() && !knownThreads.includes(m.thread_user_id)) {
-          knownThreads.push(m.thread_user_id);
-          buildThreadList();
-        }
-      }
-    )
-    .subscribe();
-}
-
-function unsubscribeChat() {
-  if (chatChannel) {
-    db.removeChannel(chatChannel);
-    chatChannel = null;
-  }
-}
-
-async function openChat(item) {
-  if (!currentUser) {
-    alert("Please sign in to chat.");
-    loginBox.hidden = false;
-    loginBox.scrollIntoView({ behavior: "smooth" });
-    return;
-  }
-
-  chatItem = item;
-  chatThreadUser = null;
-  chatMessages.innerHTML = "";
-  threadList.hidden = true;
-  chatForm.hidden = true;
-  chatTitle.textContent = item.title;
-  chatModal.hidden = false;
-
-  if (isChatOwner()) {
-    await loadThreads();
-  } else {
-    chatThreadUser = currentUser.id;
-    chatForm.hidden = false;
-    await loadMessages();
-  }
-
-  subscribeChat();
-}
-
-function closeChat() {
-  unsubscribeChat();
-  chatModal.hidden = true;
-  chatItem = null;
-  chatThreadUser = null;
-}
-
-chatClose.addEventListener("click", closeChat);
-
-chatForm.addEventListener("submit", async function (event) {
-  event.preventDefault();
-
-  const text = chatInput.value.trim();
-  if (!text || !chatItem || !chatThreadUser) return;
-
-  chatInput.value = "";
-
-  const { data, error } = await db
-    .from("messages")
-    .insert({
-      item_id: chatItem.id,
-      thread_user_id: chatThreadUser,
-      body: text
-    })
-    .select()
-    .single();
-
-  if (error) {
-    chatInput.value = text;
-    alert("Could not send: " + error.message);
-    return;
-  }
-
-  const empty = chatMessages.querySelector(".chat-empty");
-  if (empty) empty.remove();
-  addMessage(data);
+// ===== 10. SEARCH AND FILTER =====
+searchInput.addEventListener("input", function () {
+  searchText = searchInput.value.trim().toLowerCase();
+  render();
 });
 
-// ===== 10. DRAW ALL POSTS ON THE PAGE =====
+chips.forEach(function (chip) {
+  chip.addEventListener("click", function () {
+    filterType = chip.dataset.filter;
+    chips.forEach(function (c) {
+      c.classList.toggle("active", c === chip);
+    });
+    render();
+  });
+});
+
+// ===== 11. DRAW ALL POSTS ON THE PAGE =====
 function render() {
   feed.innerHTML = "";
 
-  const solvedCount = items.filter(function (i) { return i.status === "solved"; }).length;
-  statsBox.textContent = items.length === 0 ? "" :
-    "🎉 " + solvedCount + " reunited · 🔍 " + (items.length - solvedCount) + " still looking";
+  const now = Date.now();
 
-  if (items.length === 0) {
+  // posts that have not expired yet
+  const active = items.filter(function (item) {
+    return new Date(item.expires_at).getTime() > now;
+  });
+
+  const solvedCount = active.filter(function (i) { return i.status === "solved"; }).length;
+  statsBox.textContent = active.length === 0 ? "" :
+    "🎉 " + solvedCount + " reunited · 🔍 " + (active.length - solvedCount) + " still looking";
+
+  if (active.length === 0) {
     feedStatus.textContent = "No posts yet. Be the first to post!";
+    return;
+  }
+
+  // apply the filter chip and the search box
+  const list = active.filter(function (item) {
+    const solved = item.status === "solved";
+
+    if (filterType === "solved" && !solved) return false;
+    if ((filterType === "lost" || filterType === "found") &&
+        (solved || item.type !== filterType)) return false;
+
+    if (searchText) {
+      const text = (item.title + " " + item.place + " " + item.name).toLowerCase();
+      if (!text.includes(searchText)) return false;
+    }
+    return true;
+  });
+
+  // open cases first, solved ones after
+  list.sort(function (a, b) {
+    return (a.status === "solved") - (b.status === "solved");
+  });
+
+  if (list.length === 0) {
+    feedStatus.textContent = "No posts match your search.";
     return;
   }
   feedStatus.textContent = "";
 
-  // open cases first, solved ones after
-  const sorted = items.slice().sort(function (a, b) {
-    return (a.status === "solved") - (b.status === "solved");
-  });
-
-  sorted.forEach(function (item) {
+  list.forEach(function (item) {
     const solved = item.status === "solved";
-    const isOwner = currentUser && item.owner_id === currentUser.id;
-    const canManage = isOwner || isAdmin;
+    const isOwner = item.owner_id === currentUserId;
 
     const card = document.createElement("div");
     card.className = "card" + (solved ? " solved" : "");
@@ -662,7 +394,14 @@ function render() {
       year: "numeric"
     });
 
-    card.append(nameLine, placeLine, dateLine);
+    const daysLeft = Math.max(0, Math.ceil((new Date(item.expires_at).getTime() - now) / 86400000));
+    const expiryLine = document.createElement("p");
+    expiryLine.className = "expiry" + (daysLeft <= 3 ? " soon" : "");
+    expiryLine.textContent = "⏳ " + (daysLeft === 0
+      ? "Expires today"
+      : "Expires in " + daysLeft + (daysLeft === 1 ? " day" : " days"));
+
+    card.append(nameLine, placeLine, dateLine, expiryLine);
 
     if (item.lat && item.lng) {
       const mapLink = document.createElement("a");
@@ -674,21 +413,21 @@ function render() {
       card.append(mapLink);
     }
 
-    // Chat (hidden on solved cases for normal visitors)
-    if (!solved || canManage) {
-      const chatBtn = document.createElement("button");
-      chatBtn.type = "button";
-      chatBtn.className = "chat-btn";
-      chatBtn.textContent = isOwner ? "💬 View messages"
-        : (isAdmin ? "💬 View messages (admin)" : "💬 Chat about this item");
-      chatBtn.addEventListener("click", function () {
-        openChat(item);
-      });
-      card.append(chatBtn);
+    // WhatsApp button (only on open cases)
+    if (!solved) {
+      const waBtn = document.createElement("a");
+      waBtn.className = "wa-btn";
+      waBtn.href = whatsappLink(item);
+      waBtn.target = "_blank";
+      waBtn.rel = "noopener noreferrer";
+      waBtn.textContent = item.type === "lost"
+        ? "💬 I found it · WhatsApp"
+        : "💬 This is mine · WhatsApp";
+      card.append(waBtn);
     }
 
-    // Owner and admin buttons
-    if (canManage) {
+    // Buttons only for the person who posted it
+    if (isOwner) {
       const solveBtn = document.createElement("button");
       solveBtn.type = "button";
       solveBtn.className = solved ? "reopen-btn" : "solve-btn";
@@ -702,7 +441,7 @@ function render() {
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "delete-btn";
-      deleteBtn.textContent = isOwner ? "🗑️ Delete my post" : "🗑️ Delete (admin)";
+      deleteBtn.textContent = "🗑️ Delete my post";
       deleteBtn.addEventListener("click", function () {
         deleteItem(item.id);
       });
@@ -713,12 +452,13 @@ function render() {
   });
 }
 
-// ===== 11. WHEN THE POST FORM IS SUBMITTED =====
+// ===== 12. WHEN THE FORM IS SUBMITTED =====
 form.addEventListener("submit", async function (event) {
   event.preventDefault();
 
-  if (!currentUser) {
-    alert("Please sign in first.");
+  const whatsapp = cleanWhatsApp(document.getElementById("whatsapp").value);
+  if (!whatsapp) {
+    alert("Please enter a valid WhatsApp number (10 digits, or with country code).");
     return;
   }
 
@@ -726,11 +466,13 @@ form.addEventListener("submit", async function (event) {
   postBtn.textContent = "Posting...";
 
   try {
-    // upload the photo (if any) to Supabase Storage, inside the user's own folder
+    await ensureSignedIn();
+
+    // upload the photo (if any) to Supabase Storage, inside your own folder
     let imageUrl = null;
     if (selectedFile) {
       const blob = await shrinkImage(selectedFile);
-      const path = currentUser.id + "/" + Date.now() + ".jpg";
+      const path = currentUserId + "/" + Date.now() + ".jpg";
 
       const upload = await db.storage
         .from("item-photos")
@@ -746,6 +488,7 @@ form.addEventListener("submit", async function (event) {
       name: document.getElementById("name").value.trim(),
       title: document.getElementById("title").value.trim(),
       place: document.getElementById("place").value.trim(),
+      whatsapp: whatsapp,
       image_url: imageUrl,
       lat: pickedLocation ? pickedLocation.lat : null,
       lng: pickedLocation ? pickedLocation.lng : null
@@ -770,16 +513,18 @@ form.addEventListener("submit", async function (event) {
   }
 });
 
-// ===== 12. START =====
+// ===== 13. START =====
 async function start() {
   feedStatus.textContent = "Loading posts...";
-  try {
-    // remove any old anonymous session left over from the previous version
-    const { data } = await db.auth.getSession();
-    if (data.session && data.session.user.is_anonymous) {
-      await db.auth.signOut();
-    }
 
+  // work out who this browser is (needed for the delete / solved buttons)
+  try {
+    await ensureSignedIn();
+  } catch (err) {
+    console.error(err);
+  }
+
+  try {
     await loadItems();
   } catch (err) {
     console.error(err);
