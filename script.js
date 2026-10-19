@@ -140,6 +140,22 @@ openPostBtn.addEventListener("click", function () {
   if (!form.hidden) form.scrollIntoView({ behavior: "smooth" });
 });
 
+// ===== 5b. CHANGE THE "WHERE?" HINT FOR LOST / FOUND =====
+const typeSelect = document.getElementById("type");
+const placeInput = document.getElementById("place");
+
+function updatePlaceHint() {
+  placeInput.placeholder = typeSelect.value === "lost"
+    ? "Where did you lose it? (e.g. Library, 2nd floor)"
+    : "Where did you find it? (e.g. Canteen, near the gate)";
+}
+
+typeSelect.addEventListener("change", updatePlaceHint);
+form.addEventListener("reset", function () {
+  setTimeout(updatePlaceHint, 0);
+});
+updatePlaceHint();
+
 // ===== 6. SIGN IN (anonymous, automatic, nothing to see) =====
 async function ensureSignedIn() {
   const { data } = await db.auth.getSession();
@@ -705,7 +721,8 @@ function render() {
     nameLine.textContent = (item.type === "lost" ? "Lost by: " : "Found by: ") + item.name;
 
     const placeLine = document.createElement("p");
-    placeLine.textContent = (item.type === "lost" ? "Lost" : "Found") + " at " + item.place;
+    placeLine.className = "place-line";
+    placeLine.textContent = "📍 " + (item.type === "lost" ? "Lost at: " : "Found at: ") + item.place;
 
     const timeLine = document.createElement("p");
     timeLine.textContent = "🕒 Posted " + new Date(item.created_at).toLocaleString("en-GB", {
