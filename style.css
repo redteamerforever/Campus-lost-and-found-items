@@ -27,10 +27,111 @@ body {
   display: none !important;
 }
 
-h1 {
+/* ----- Hero ----- */
+.hero {
+  position: relative;
+  max-width: 400px;
+  margin: 0 auto;
   text-align: center;
+}
+
+.hero h1 {
+  margin: 8px 0 4px;
   color: rgb(255, 255, 255);
+  font-size: 30px;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tagline {
+  margin: 0 0 16px;
+  color: rgb(255, 255, 255);
+  font-size: 15px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.cta {
+  padding: 14px 28px;
+  border: none;
+  border-radius: 30px;
+  background: rgb(255, 255, 255);
+  color: rgb(180, 92, 255);
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+
+.cta:hover {
+  transform: scale(1.05);
+}
+
+.theme-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* ----- Counters ----- */
+.stat-cards {
+  display: flex;
+  gap: 10px;
+  max-width: 400px;
+  margin: 20px auto 0;
+}
+
+.stat-card {
+  flex: 1;
+  padding: 12px 6px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.stat-num {
+  display: block;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 13px;
+}
+
+/* ----- How it works ----- */
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+  max-width: 400px;
+  margin: 16px auto 0;
+  padding: 0;
+  list-style: none;
+  color: rgb(255, 255, 255);
+  font-size: 13px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.steps b {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: rgb(255, 255, 255);
+  color: rgb(180, 92, 255);
+  text-align: center;
+  line-height: 20px;
+  text-shadow: none;
 }
 
 /* ----- Cards ----- */
@@ -42,6 +143,15 @@ h1 {
   max-width: 400px;
   margin: 16px auto;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.card.pop {
+  animation: popIn 0.4s ease both;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* each card gets a different top colour */
@@ -59,6 +169,14 @@ h1 {
 
 .lost  { background: rgb(220, 20, 60); }
 .found { background: rgb(46, 139, 87); }
+
+.cat-chip {
+  margin-left: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgb(235, 235, 245);
+  font-size: 12px;
+}
 
 /* ----- Form ----- */
 .post-form {
@@ -146,7 +264,7 @@ h1 {
   font-size: 15px;
 }
 
-/* ----- Map picker ----- */
+/* ----- Map picker (inside the form) ----- */
 .map-box {
   display: none;
   margin-top: 10px;
@@ -168,32 +286,51 @@ h1 {
   color: rgb(90, 90, 90);
 }
 
-/* ----- Search + filter ----- */
+/* ----- Search, filters, sort, tabs ----- */
 .toolbar {
   max-width: 400px;
-  margin: 16px auto;
+  margin: 20px auto 16px;
+}
+
+.toolbar input,
+.toolbar select {
+  padding: 12px 16px;
+  box-sizing: border-box;
+  font-size: 15px;
+  border: none;
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .toolbar input {
   display: block;
   width: 100%;
-  padding: 12px 16px;
-  box-sizing: border-box;
   font-size: 16px;
-  border: none;
-  border-radius: 25px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
-.chips {
+.toolbar .row {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   gap: 8px;
   margin-top: 10px;
 }
 
-.chip {
+.toolbar .row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.chips,
+.view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chip,
+.tab {
   padding: 8px 16px;
   border: none;
   border-radius: 20px;
@@ -204,10 +341,24 @@ h1 {
   cursor: pointer;
 }
 
-.chip.active {
+.chip.active,
+.tab.active {
   background: rgb(255, 255, 255);
   color: rgb(180, 92, 255);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* ----- Map view of all posts ----- */
+.view-map-box {
+  max-width: 700px;
+  margin: 16px auto;
+}
+
+#viewMap {
+  height: 60vh;
+  min-height: 340px;
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 /* ----- Photo on a card ----- */
@@ -217,18 +368,36 @@ h1 {
   object-fit: cover;
   border-radius: 15px;
   margin-top: 10px;
+  cursor: zoom-in;
 }
 
-/* ----- Map link on a card ----- */
+/* ----- Map link and share on a card ----- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .map-link {
   display: inline-block;
-  margin-top: 6px;
   padding: 8px 14px;
   border-radius: 10px;
   background: rgb(72, 198, 239);
   color: rgb(255, 255, 255);
   text-decoration: none;
   font-size: 14px;
+}
+
+.share-btn {
+  padding: 8px 14px;
+  border: 2px solid rgb(111, 134, 214);
+  border-radius: 10px;
+  background: none;
+  color: rgb(111, 134, 214);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 /* ----- WhatsApp button on a card ----- */
@@ -249,7 +418,7 @@ h1 {
   opacity: 0.9;
 }
 
-/* ----- Expiry line ----- */
+/* ----- Small info lines on a card ----- */
 .expiry {
   font-size: 13px;
   color: rgb(110, 110, 110);
@@ -325,11 +494,145 @@ h1 {
   to { transform: translateY(110vh) rotate(360deg); opacity: 0.8; }
 }
 
-/* ----- Stats and feed status ----- */
-.stats,
+/* ----- Photo viewer ----- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+
+.lightbox img {
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 12px;
+}
+
+/* ----- Pop-up messages ----- */
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(92vw, 380px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgb(40, 40, 55);
+  color: rgb(255, 255, 255);
+  font-size: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  animation: toastIn 0.25s ease, toastOut 0.4s ease 3s forwards;
+}
+
+.toast.success { background: rgb(46, 139, 87); }
+.toast.error   { background: rgb(220, 20, 60); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(12px); }
+}
+
+/* ----- Feed status and footer ----- */
 .feed-status {
   text-align: center;
   color: rgb(255, 255, 255);
   font-weight: bold;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.footer {
+  margin: 30px auto 10px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  font-size: 13px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* ===== DARK MODE ===== */
+body.dark {
+  background: linear-gradient(
+    135deg,
+    rgb(26, 26, 46),
+    rgb(22, 33, 62),
+    rgb(15, 52, 96),
+    rgb(83, 52, 131)
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+body.dark .card,
+body.dark .post-form,
+body.dark .stat-card {
+  background: rgba(30, 30, 48, 0.92);
+  color: rgb(235, 235, 245);
+}
+
+body.dark .post-form input,
+body.dark .post-form select {
+  background: rgb(45, 45, 65);
+  color: rgb(235, 235, 245);
+  border-color: rgb(80, 80, 110);
+}
+
+body.dark .pick-btn {
+  background: rgb(45, 45, 65);
+  color: rgb(235, 235, 245);
+  border-color: rgb(80, 80, 110);
+}
+
+body.dark .post-form .loc-btn {
+  background: rgb(35, 60, 50);
+  color: rgb(150, 230, 180);
+  border-color: rgb(60, 110, 85);
+}
+
+body.dark .photo-label,
+body.dark .note,
+body.dark .map-hint,
+body.dark .expiry {
+  color: rgb(170, 170, 190);
+}
+
+body.dark .expiry.soon {
+  color: rgb(255, 120, 140);
+}
+
+body.dark .toolbar input,
+body.dark .toolbar select {
+  background: rgb(40, 40, 60);
+  color: rgb(235, 235, 245);
+}
+
+body.dark .chip,
+body.dark .tab {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgb(255, 255, 255);
+}
+
+body.dark .chip.active,
+body.dark .tab.active {
+  background: rgb(255, 255, 255);
+  color: rgb(180, 92, 255);
+}
+
+body.dark .cat-chip {
+  background: rgb(60, 60, 90);
+  color: rgb(235, 235, 245);
 }
