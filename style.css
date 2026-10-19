@@ -673,3 +673,30 @@ body.dark .post-form textarea {
 .place-line {
   font-weight: bold;
 }
+
+/* ----- Close (✕) button on the location map ----- */
+.map-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: rgb(90, 90, 90);
+}
+
+.post-form .map-close {
+  width: 36px;
+  height: 36px;
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgb(220, 20, 60);
+  color: rgb(255, 255, 255);
+  font-size: 18px;
+  line-height: 1;
+}
+
+body.dark .map-head {
+  color: rgb(170, 170, 190);
+}
