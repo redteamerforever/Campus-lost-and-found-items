@@ -1,6 +1,6 @@
 // ===== 1. SUPABASE SETUP: paste YOUR values here =====
-const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
-const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+const SUPABASE_URL = "https://acqqbhaoukjarnijhgte.supabase.co";
+const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
 // (never paste the secret / service_role key here)
 
 const { createClient } = supabase;
