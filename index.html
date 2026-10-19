@@ -3,23 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6f86d6">
   <title>Campus Lost & Found</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Campus Lost & Found</h1>
+  <header class="hero">
+    <button type="button" id="themeBtn" class="theme-btn" aria-label="Switch dark mode">🌙</button>
+    <h1>Campus Lost & Found</h1>
+    <p class="tagline">Lost something? Found something? Let's get it back to its owner.</p>
+    <button type="button" id="openPostBtn" class="cta">➕ Post an item</button>
+  </header>
 
-  <form class="post-form">
+  <div class="stat-cards">
+    <div class="stat-card"><span id="statLost" class="stat-num">0</span><span class="stat-label">🔴 Lost</span></div>
+    <div class="stat-card"><span id="statFound" class="stat-num">0</span><span class="stat-label">🟢 Found</span></div>
+    <div class="stat-card"><span id="statSolved" class="stat-num">0</span><span class="stat-label">🎉 Reunited</span></div>
+  </div>
+
+  <ol class="steps">
+    <li><b>1</b> Post what you lost or found</li>
+    <li><b>2</b> Get contacted on WhatsApp</li>
+    <li><b>3</b> Mark it as returned 🎉</li>
+  </ol>
+
+  <form class="post-form" id="postForm" hidden>
     <h2>Post an item</h2>
     <select id="type">
       <option value="lost">Lost</option>
       <option value="found">Found</option>
     </select>
+    <select id="category"></select>
     <input type="text" id="name" placeholder="Your name" maxlength="60" required>
     <input type="text" id="title" placeholder="Item name (e.g. Black wallet)" maxlength="100" required>
     <input type="text" id="place" placeholder="Where?" maxlength="100" required>
-    <input type="tel" id="whatsapp" placeholder="WhatsApp number (e.g. 0123456789)" maxlength="10" required>
+    <input type="tel" id="whatsapp" placeholder="WhatsApp number (e.g. 0123456789)" maxlength="16" required>
     <p class="note">Your WhatsApp number is shown on your post so people can contact you.</p>
 
     <!-- PHOTO: camera or gallery -->
@@ -47,20 +66,43 @@
     <button type="submit">Post</button>
   </form>
 
-  <!-- SEARCH + FILTER -->
+  <!-- SEARCH, FILTER, SORT, VIEW -->
   <div class="toolbar">
     <input type="search" id="searchInput" placeholder="🔍 Search item, place or name">
+
+    <div class="row">
+      <select id="categoryFilter"></select>
+      <select id="sortSelect">
+        <option value="newest">Newest first</option>
+        <option value="expiring">Expiring soon</option>
+        <option value="nearest">Nearest to me</option>
+      </select>
+    </div>
+
     <div class="chips">
       <button type="button" class="chip active" data-filter="all">All</button>
       <button type="button" class="chip" data-filter="lost">Lost</button>
       <button type="button" class="chip" data-filter="found">Found</button>
       <button type="button" class="chip" data-filter="solved">Solved ✅</button>
     </div>
+
+    <div class="view-tabs">
+      <button type="button" class="tab active" data-view="list">📋 List</button>
+      <button type="button" class="tab" data-view="map">🗺️ Map</button>
+    </div>
   </div>
 
-  <p id="stats" class="stats"></p>
   <p id="feedStatus" class="feed-status"></p>
   <div id="feed"></div>
+
+  <div id="viewMapBox" class="view-map-box" hidden>
+    <div id="viewMap"></div>
+    <p id="mapNote" class="feed-status"></p>
+  </div>
+
+  <footer class="footer">Made for our campus 💙 · Posts expire automatically after 30 days</footer>
+
+  <div id="toasts" class="toasts"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
