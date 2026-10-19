@@ -67,16 +67,22 @@ body {
 }
 
 .theme-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 40px;
-  height: 40px;
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1500;
+  width: 48px;
+  height: 48px;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  font-size: 18px;
+  background: rgb(255, 255, 255);
+  font-size: 22px;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .theme-btn {
+  background: rgb(60, 60, 90);
 }
 
 /* ----- Counters ----- */
@@ -585,7 +591,8 @@ body.dark .stat-card {
 }
 
 body.dark .post-form input,
-body.dark .post-form select {
+body.dark .post-form select,
+body.dark .post-form textarea {
   background: rgb(45, 45, 65);
   color: rgb(235, 235, 245);
   border-color: rgb(80, 80, 110);
