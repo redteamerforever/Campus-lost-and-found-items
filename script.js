@@ -483,9 +483,8 @@ async function setSolved(id, solved) {
 
   const { error } = await db
     .from("items")
-    
+    .update({ status: solved ? "solved" : "open" })
     .eq("id", id);
-      .update({ status: solved ? "solved" : "open" })
 
   if (error) {
     toast("Could not update: " + error.message, "error");
