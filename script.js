@@ -966,3 +966,78 @@ async function start() {
 }
 
 start();
+
+// ===== 18. CURSOR LIGHT (feeds the glow effect in style.css) =====
+(function () {
+  // only for real mouse devices, and not if the user asked for less motion
+  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const root = document.documentElement;
+  const BOXES = ".card, .stat-card, .post-form";
+
+  let targetX = window.innerWidth / 2;
+  let targetY = window.innerHeight * 0.25;
+  let x = targetX;
+  let y = targetY;
+  let lastX = targetX;
+  let lastY = targetY;
+  let running = false;
+
+  // page glow: glides after the cursor
+  function tick() {
+    x += (targetX - x) * 0.15;
+    y += (targetY - y) * 0.15;
+    root.style.setProperty("--cursor-x", x.toFixed(1) + "px");
+    root.style.setProperty("--cursor-y", y.toFixed(1) + "px");
+
+    if (Math.abs(targetX - x) > 0.5 || Math.abs(targetY - y) > 0.5) {
+      requestAnimationFrame(tick);
+    } else {
+      running = false;
+    }
+  }
+
+  function startTick() {
+    if (running) return;
+    running = true;
+    requestAnimationFrame(tick);
+  }
+
+  // spotlight inside the card / form under the cursor
+  function lightBox(clientX, clientY, el) {
+    const box = el && el.closest ? el.closest(BOXES) : null;
+    if (!box) return;
+    const r = box.getBoundingClientRect();
+    box.style.setProperty("--mx", (clientX - r.left) + "px");
+    box.style.setProperty("--my", (clientY - r.top) + "px");
+  }
+
+  window.addEventListener("pointermove", function (e) {
+    if (e.pointerType === "touch") return;
+    targetX = lastX = e.clientX;
+    targetY = lastY = e.clientY;
+    root.style.setProperty("--glow-on", "1");
+    startTick();
+    lightBox(e.clientX, e.clientY, e.target);
+  }, { passive: true });
+
+  // when you scroll, cards move under a still mouse, so refresh the spotlight
+  let scrollQueued = false;
+  window.addEventListener("scroll", function () {
+    if (scrollQueued) return;
+    scrollQueued = true;
+    requestAnimationFrame(function () {
+      scrollQueued = false;
+      lightBox(lastX, lastY, document.elementFromPoint(lastX, lastY));
+    });
+  }, { passive: true });
+
+  // fade the page glow out when the mouse leaves the window
+  document.documentElement.addEventListener("mouseleave", function () {
+    root.style.setProperty("--glow-on", "0");
+  });
+  document.documentElement.addEventListener("mouseenter", function () {
+    root.style.setProperty("--glow-on", "1");
+  });
+})();
