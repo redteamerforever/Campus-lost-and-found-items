@@ -2,8 +2,15 @@
 
 /* =========================================================
    Campus Lost & Found: stylesheet
-   All class names match the previous version, so script.js
-   and index.html keep working without changes.
+   Sections:
+   1. Design tokens and page
+   2. Hero, counters, steps
+   3. Post cards
+   4. Post form
+   5. Search, filters, tabs
+   6. Misc (lightbox, toasts, footer, layout)
+   7. Cursor + touch light
+   8. Pop animation for clickable things
    ========================================================= */
 
 /* ----- Design tokens (light) ----- */
@@ -142,12 +149,7 @@ body.dark {
 }
 
 .cta:hover {
-  transform: translateY(-2px);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
-}
-
-.cta:active {
-  transform: scale(0.97);
 }
 
 body.dark .cta {
@@ -438,15 +440,6 @@ body.dark .tag.found {
   font-size: 16px;
   font-weight: 800;
   box-shadow: 0 6px 16px rgba(18, 176, 80, 0.35);
-  transition: transform 0.12s ease;
-}
-
-.wa-btn:hover {
-  transform: translateY(-1px);
-}
-
-.wa-btn:active {
-  transform: scale(0.98);
 }
 
 /* ----- Delete (kept quiet so it is not tapped by mistake) ----- */
@@ -492,6 +485,12 @@ body.dark .tag.found {
   color: #fff;
   font-weight: 800;
   text-align: center;
+}
+
+/* resolved time on solved cards */
+.resolved-line {
+  color: var(--found);
+  font-weight: 700;
 }
 
 .solve-btn,
@@ -672,7 +671,6 @@ body.dark .solve-btn {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .pick-btn:hover {
@@ -823,7 +821,6 @@ body.dark .solve-btn {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease;
 }
 
 .chip:hover,
@@ -1043,21 +1040,12 @@ body::before {
   z-index: 1;
 }
 
-.stat-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-/* mouse-only extras: real hover exists only here */
+/* mouse-only: real hover exists only here */
 @media (hover: hover) and (pointer: fine) {
   .card:hover::after,
   .stat-card:hover::after,
   .post-form:hover::after {
     opacity: 1;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(38, 28, 90, 0.28);
   }
 }
 
@@ -1128,6 +1116,7 @@ body::before {
 
   .stat-card:hover {
     transform: translateY(-4px) scale(1.04);
+    box-shadow: 0 10px 24px rgba(38, 28, 90, 0.28);
   }
 }
 
@@ -1176,10 +1165,4 @@ body::before {
     transform: none !important;
     animation: none !important;
   }
-
-   /* resolved time on solved cards */
-.resolved-line {
-  color: var(--found);
-  font-weight: 700;
-}
 }
