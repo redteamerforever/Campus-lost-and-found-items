@@ -4,7 +4,13 @@ const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
 // (never paste the secret / service_role key here)
 
 const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: true,      // keep the same anonymous user between visits
+    autoRefreshToken: true,
+    detectSessionInUrl: false
+  }
+});
 
 // ===== 2. CATEGORIES =====
 const CATEGORIES = {
@@ -49,6 +55,7 @@ const mapBox = document.getElementById("mapBox");
 let items = [];            // posts loaded from Supabase
 let lastList = [];         // posts currently shown (after filters)
 let currentUserId = null;  // this browser's anonymous user id
+let signInPromise = null;  // makes sure only ONE sign-in runs at a time
 let selectedFile = null;   // photo chosen by the user
 let pickedLocation = null; // pin {lat, lng}
 let userPos = null;        // where the visitor is (for "nearest")
@@ -157,17 +164,40 @@ form.addEventListener("reset", function () {
 updatePlaceHint();
 
 // ===== 6. SIGN IN (anonymous, automatic, nothing to see) =====
+// Only one sign-in can run at a time, so we never create two different
+// anonymous users by accident (that would split your posts between them).
 async function ensureSignedIn() {
-  const { data } = await db.auth.getSession();
-  if (data.session) {
-    currentUserId = data.session.user.id;
-    return;
-  }
+  if (signInPromise) return signInPromise;
 
-  const result = await db.auth.signInAnonymously();
-  if (result.error) throw result.error;
-  currentUserId = result.data.user.id;
+  signInPromise = (async function () {
+    const { data } = await db.auth.getSession();
+    if (data.session) {
+      currentUserId = data.session.user.id;
+      return currentUserId;
+    }
+
+    const result = await db.auth.signInAnonymously();
+    if (result.error) throw result.error;
+    currentUserId = result.data.user.id;
+    return currentUserId;
+  })();
+
+  try {
+    return await signInPromise;
+  } finally {
+    signInPromise = null;
+  }
 }
+
+// Keep currentUserId equal to the user that is REALLY signed in, and redraw
+// the cards so the Delete / Solved buttons match.
+db.auth.onAuthStateChange(function (event, session) {
+  const newId = session && session.user ? session.user.id : null;
+  if (newId && newId !== currentUserId) {
+    currentUserId = newId;
+    if (items.length) render();
+  }
+});
 
 // ===== 7. LOAD POSTS =====
 async function loadItems() {
@@ -578,7 +608,7 @@ function updateViewMap() {
     where.textContent = item.place;
     box.append(title, where);
 
-    if (item.status !== "solved") {
+    if (item.status !== "solved" && item.owner_id !== currentUserId) {
       const link = document.createElement("a");
       link.href = whatsappLink(item);
       link.target = "_blank";
@@ -685,7 +715,7 @@ function render() {
 
   list.forEach(function (item) {
     const solved = item.status === "solved";
-    const isOwner = item.owner_id === currentUserId;
+    const isOwner = !!currentUserId && item.owner_id === currentUserId;
 
     const card = document.createElement("div");
     card.className = "card" + (solved ? " solved" : "") + (firstRender ? " pop" : "");
@@ -710,7 +740,17 @@ function render() {
     const heading = document.createElement("h2");
     heading.textContent = item.title;
 
-    card.append(tag, catChip, heading);
+    card.append(tag, catChip);
+
+    // small label so you can spot your own posts
+    if (isOwner) {
+      const ownChip = document.createElement("span");
+      ownChip.className = "own-chip";
+      ownChip.textContent = "👤 Your post";
+      card.append(ownChip);
+    }
+
+    card.append(heading);
 
     if (item.image_url) {
       const photo = document.createElement("img");
@@ -788,8 +828,9 @@ function render() {
 
     card.append(actions);
 
-    // WhatsApp button (only on open cases)
-    if (!solved) {
+    // WhatsApp button: only for OTHER people, on open cases
+    // (you should not message yourself on your own post)
+    if (!solved && !isOwner) {
       const waBtn = document.createElement("a");
       waBtn.className = "wa-btn";
       waBtn.href = whatsappLink(item);
@@ -903,6 +944,8 @@ async function start() {
   // work out who this browser is (needed for the delete / solved buttons)
   try {
     await ensureSignedIn();
+    // handy for testing: open the browser console (F12) to see it
+    console.log("[Lost & Found] signed in as", currentUserId);
   } catch (err) {
     console.error(err);
   }
