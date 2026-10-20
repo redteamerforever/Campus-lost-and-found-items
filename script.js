@@ -67,12 +67,15 @@ let viewMode = "list";     // list | map
 let refitNext = false;     // zoom the big map to fit the posts
 let firstRender = true;    // play the entrance animation only once
 
-// fill the two category drop-downs
+// fill the two category drop-downs (cleared first, so nothing doubles or goes missing)
+categorySelect.innerHTML = "";
+categoryFilter.innerHTML = "";
 categoryFilter.append(new Option("All categories", "all"));
 Object.keys(CATEGORIES).forEach(function (key) {
   categorySelect.append(new Option(CATEGORIES[key], key));
   categoryFilter.append(new Option(CATEGORIES[key], key));
 });
+categoryFilter.value = "all";
 
 // ===== 4. SMALL HELPERS =====
 function toast(message, kind) {
