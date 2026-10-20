@@ -1,35 +1,35 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
- 
+
 /* =========================================================
    Campus Lost & Found: stylesheet
    All class names match the previous version, so script.js
    and index.html keep working without changes.
    ========================================================= */
- 
+
 /* ----- Design tokens (light) ----- */
 :root {
   --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --w: 440px;                       /* width of the single-column layout */
- 
+
   --ink: #1d2140;
   --ink-soft: #5d6283;
   --surface: rgba(255, 255, 255, 0.92);
   --field: #f3f4fb;
   --field-border: #d9dcee;
   --divider: rgba(29, 33, 64, 0.12);
- 
+
   --brand: #7a56f0;
   --brand-2: #4f8df5;
   --lost: #e8415f;
   --found: #14a56c;
   --info: #1fa8e0;
   --warn: #f2a23a;
- 
+
   --shadow: 0 10px 28px rgba(38, 28, 90, 0.2);
   --shadow-sm: 0 4px 14px rgba(38, 28, 90, 0.16);
   --ring: 0 0 0 3px rgba(122, 86, 240, 0.45);
 }
- 
+
 /* ----- Design tokens (dark) ----- */
 body.dark {
   --ink: #eceef9;
@@ -38,19 +38,19 @@ body.dark {
   --field: #282b49;
   --field-border: #444876;
   --divider: rgba(236, 238, 249, 0.14);
- 
+
   --brand: #a78bff;
   --lost: #ff6b86;
   --found: #3fd49a;
- 
+
   --shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
   --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
- 
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
- 
+
 /* ----- Page: animated RGB gradient background ----- */
 body {
   margin: 0;
@@ -71,7 +71,7 @@ body {
   background-size: 400% 400%;
   animation: gradientShift 18s ease infinite;
 }
- 
+
 body.dark {
   background: linear-gradient(
     135deg,
@@ -83,22 +83,22 @@ body.dark {
   background-size: 400% 400%;
   animation: gradientShift 18s ease infinite;
 }
- 
+
 @keyframes gradientShift {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
- 
+
 [hidden] {
   display: none !important;
 }
- 
+
 :focus-visible {
   outline: none;
   box-shadow: var(--ring);
 }
- 
+
 /* ----- Hero ----- */
 .hero {
   position: relative;
@@ -107,7 +107,7 @@ body.dark {
   padding-top: 6px;
   text-align: center;
 }
- 
+
 .hero h1 {
   margin: 8px 0 6px;
   color: #fff;
@@ -117,7 +117,7 @@ body.dark {
   line-height: 1.1;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
- 
+
 .tagline {
   margin: 0 auto 20px;
   max-width: 34ch;
@@ -126,7 +126,7 @@ body.dark {
   font-weight: 500;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
- 
+
 .cta {
   padding: 15px 30px;
   border: none;
@@ -140,21 +140,21 @@ body.dark {
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
- 
+
 .cta:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
 }
- 
+
 .cta:active {
   transform: scale(0.97);
 }
- 
+
 body.dark .cta {
   background: rgb(236, 238, 249);
   color: rgb(83, 52, 131);
 }
- 
+
 /* ----- Dark mode toggle ----- */
 .theme-btn {
   position: fixed;
@@ -171,15 +171,15 @@ body.dark .cta {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   transition: transform 0.15s ease;
 }
- 
+
 .theme-btn:hover {
   transform: rotate(-12deg) scale(1.06);
 }
- 
+
 body.dark .theme-btn {
   background: rgb(60, 60, 96);
 }
- 
+
 /* ----- Counters ----- */
 .stat-cards {
   display: flex;
@@ -187,7 +187,7 @@ body.dark .theme-btn {
   max-width: var(--w);
   margin: 22px auto 0;
 }
- 
+
 .stat-card {
   flex: 1;
   padding: 14px 6px 12px;
@@ -198,7 +198,7 @@ body.dark .theme-btn {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
- 
+
 .stat-num {
   display: block;
   font-size: 30px;
@@ -206,13 +206,13 @@ body.dark .theme-btn {
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
- 
+
 .stat-label {
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
 }
- 
+
 /* ----- How it works ----- */
 .steps {
   display: flex;
@@ -228,7 +228,7 @@ body.dark .theme-btn {
   font-weight: 600;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
- 
+
 .steps b {
   display: inline-block;
   width: 21px;
@@ -241,12 +241,12 @@ body.dark .theme-btn {
   line-height: 21px;
   text-shadow: none;
 }
- 
+
 body.dark .steps b {
   background: rgb(236, 238, 249);
   color: rgb(83, 52, 131);
 }
- 
+
 /* =========================================================
    POST CARDS
    Looks like a pinned notice: a coloured edge shows at a
@@ -266,7 +266,7 @@ body.dark .steps b {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
- 
+
 /* coloured edge */
 .card::before {
   content: "";
@@ -277,20 +277,20 @@ body.dark .steps b {
   width: 8px;
   background: var(--accent);
 }
- 
+
 /* colour follows the type of the post */
 .card:has(.tag.lost)  { --accent: var(--lost); }
 .card:has(.tag.found) { --accent: var(--found); }
- 
+
 .card.pop {
   animation: popIn 0.4s ease both;
 }
- 
+
 @keyframes popIn {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
- 
+
 .card h2,
 .card h3,
 .card h4 {
@@ -301,11 +301,11 @@ body.dark .steps b {
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
- 
+
 .card p {
   margin: 6px 0;
 }
- 
+
 /* Lost / Found badge */
 .tag {
   display: inline-block;
@@ -316,15 +316,15 @@ body.dark .steps b {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
- 
+
 .lost  { background: var(--lost); }
 .found { background: var(--found); }
- 
+
 body.dark .tag.lost,
 body.dark .tag.found {
   color: rgb(20, 20, 40);
 }
- 
+
 .cat-chip {
   display: inline-block;
   margin-left: 6px;
@@ -336,18 +336,31 @@ body.dark .tag.found {
   font-size: 12px;
   font-weight: 600;
 }
- 
+
 .item-desc {
   margin: 8px 0;
   color: var(--ink);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
- 
+
 .place-line {
   font-weight: 700;
 }
- 
+
+/* "Your post" label on the poster's own cards */
+.own-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(122, 86, 240, 0.14);
+  border: 1px solid rgba(122, 86, 240, 0.4);
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 /* ----- Photo on a card ----- */
 .item-photo {
   display: block;
@@ -359,14 +372,14 @@ body.dark .tag.found {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   cursor: zoom-in;
 }
- 
+
 /* ----- Small info lines on a card ----- */
 .expiry {
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-soft);
 }
- 
+
 .expiry.soon {
   display: inline-block;
   padding: 3px 10px;
@@ -375,7 +388,7 @@ body.dark .tag.found {
   color: var(--lost);
   font-weight: 700;
 }
- 
+
 /* ----- Card actions: map link, share ----- */
 .actions {
   display: flex;
@@ -383,7 +396,7 @@ body.dark .tag.found {
   gap: 8px;
   margin-top: 12px;
 }
- 
+
 .map-link {
   display: inline-block;
   padding: 10px 16px;
@@ -394,7 +407,7 @@ body.dark .tag.found {
   font-size: 14px;
   font-weight: 700;
 }
- 
+
 .share-btn {
   padding: 10px 16px;
   border: 2px solid var(--brand);
@@ -406,12 +419,12 @@ body.dark .tag.found {
   font-weight: 700;
   cursor: pointer;
 }
- 
+
 .map-link:hover,
 .share-btn:hover {
   opacity: 0.88;
 }
- 
+
 /* ----- WhatsApp button (the main action) ----- */
 .wa-btn {
   display: block;
@@ -427,15 +440,15 @@ body.dark .tag.found {
   box-shadow: 0 6px 16px rgba(18, 176, 80, 0.35);
   transition: transform 0.12s ease;
 }
- 
+
 .wa-btn:hover {
   transform: translateY(-1px);
 }
- 
+
 .wa-btn:active {
   transform: scale(0.98);
 }
- 
+
 /* ----- Delete (kept quiet so it is not tapped by mistake) ----- */
 .delete-btn {
   display: block;
@@ -451,26 +464,26 @@ body.dark .tag.found {
   font-weight: 700;
   cursor: pointer;
 }
- 
+
 .delete-btn:hover {
   background: var(--lost);
   border-color: var(--lost);
   color: #fff;
 }
- 
+
 /* ----- Solved cases ----- */
 .card.solved {
   --accent: var(--found);
 }
- 
+
 .card.solved::before {
   background: var(--found);
 }
- 
+
 .card.solved .item-photo {
   filter: grayscale(0.35);
 }
- 
+
 .solved-banner {
   margin-bottom: 10px;
   padding: 9px 12px;
@@ -480,7 +493,7 @@ body.dark .tag.found {
   font-weight: 800;
   text-align: center;
 }
- 
+
 .solve-btn,
 .reopen-btn {
   display: block;
@@ -495,19 +508,19 @@ body.dark .tag.found {
   font-weight: 700;
   cursor: pointer;
 }
- 
+
 .solve-btn  { background: var(--found); }
 .reopen-btn { background: rgb(120, 124, 150); }
- 
+
 .solve-btn:hover,
 .reopen-btn:hover {
   opacity: 0.9;
 }
- 
+
 body.dark .solve-btn {
   color: rgb(15, 30, 25);
 }
- 
+
 .confetti {
   position: fixed;
   top: -30px;
@@ -516,11 +529,11 @@ body.dark .solve-btn {
   z-index: 2000;
   animation: fall 2.5s linear forwards;
 }
- 
+
 @keyframes fall {
   to { transform: translateY(110vh) rotate(360deg); opacity: 0.8; }
 }
- 
+
 /* =========================================================
    POST FORM
    ========================================================= */
@@ -535,14 +548,14 @@ body.dark .solve-btn {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
- 
+
 .post-form h2 {
   margin: 0 0 4px;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.01em;
 }
- 
+
 .post-form input,
 .post-form select,
 .post-form textarea {
@@ -559,13 +572,13 @@ body.dark .solve-btn {
   font-size: 16px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
- 
+
 .post-form input::placeholder,
 .post-form textarea::placeholder {
   color: var(--ink-soft);
   opacity: 0.8;
 }
- 
+
 .post-form input:focus,
 .post-form select:focus,
 .post-form textarea:focus {
@@ -573,12 +586,12 @@ body.dark .solve-btn {
   border-color: var(--brand);
   box-shadow: var(--ring);
 }
- 
+
 .post-form textarea {
   resize: vertical;
   min-height: 84px;
 }
- 
+
 .post-form select {
   appearance: none;
   -webkit-appearance: none;
@@ -587,7 +600,7 @@ body.dark .solve-btn {
   background-repeat: no-repeat;
   background-position: right 14px center;
 }
- 
+
 /* browser autofill (the light boxes in dark mode) */
 .post-form input:-webkit-autofill,
 .post-form input:-webkit-autofill:focus {
@@ -596,11 +609,11 @@ body.dark .solve-btn {
   caret-color: var(--ink);
   transition: background-color 9999s ease-in-out 0s;
 }
- 
+
 .post-form input.hidden-input {
   display: none;
 }
- 
+
 /* Post button */
 .post-form button[type="submit"] {
   display: block;
@@ -618,21 +631,21 @@ body.dark .solve-btn {
   box-shadow: 0 8px 20px rgba(122, 86, 240, 0.35);
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
- 
+
 .post-form button[type="submit"]:hover {
   opacity: 0.93;
 }
- 
+
 .post-form button[type="submit"]:active {
   transform: scale(0.98);
 }
- 
+
 .note {
   margin: 6px 2px 0;
   font-size: 12.5px;
   color: var(--ink-soft);
 }
- 
+
 /* ----- Photo buttons (camera / gallery) ----- */
 .photo-label {
   margin: 18px 0 0;
@@ -640,13 +653,13 @@ body.dark .solve-btn {
   font-weight: 700;
   color: var(--ink);
 }
- 
+
 .photo-buttons {
   display: flex;
   gap: 10px;
   margin-top: 8px;
 }
- 
+
 .pick-btn {
   flex: 1;
   padding: 12px 10px;
@@ -661,18 +674,18 @@ body.dark .solve-btn {
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
- 
+
 .pick-btn:hover {
   border-color: var(--brand);
 }
- 
+
 .status {
   margin: 8px 2px 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--found);
 }
- 
+
 /* ----- Location buttons (auto-detect / pin) ----- */
 .post-form .loc-btn {
   flex: 1;
@@ -687,27 +700,27 @@ body.dark .solve-btn {
   font-weight: 700;
   cursor: pointer;
 }
- 
+
 .post-form .loc-btn:hover {
   background: rgba(20, 165, 108, 0.18);
 }
- 
+
 /* ----- Map picker (inside the form) ----- */
 .map-box {
   display: none;
   margin-top: 12px;
 }
- 
+
 .map-box.open {
   display: block;
 }
- 
+
 #pickMap {
   height: 300px;
   border-radius: 14px;
   border: 1.5px solid var(--field-border);
 }
- 
+
 .map-head {
   display: flex;
   align-items: center;
@@ -717,7 +730,7 @@ body.dark .solve-btn {
   font-weight: 600;
   color: var(--ink-soft);
 }
- 
+
 .post-form .map-close {
   display: block;
   width: 38px;
@@ -732,13 +745,13 @@ body.dark .solve-btn {
   line-height: 1;
   cursor: pointer;
 }
- 
+
 .map-hint {
   margin: 8px 2px 0;
   font-size: 13px;
   color: var(--ink-soft);
 }
- 
+
 /* =========================================================
    SEARCH, FILTERS, SORT, TABS
    ========================================================= */
@@ -746,7 +759,7 @@ body.dark .solve-btn {
   max-width: var(--w);
   margin: 22px auto 16px;
 }
- 
+
 .toolbar input,
 .toolbar select {
   box-sizing: border-box;
@@ -759,17 +772,17 @@ body.dark .solve-btn {
   font-size: 15px;
   box-shadow: var(--shadow-sm);
 }
- 
+
 .toolbar input {
   display: block;
   width: 100%;
   font-size: 16px;
 }
- 
+
 .toolbar input::placeholder {
   color: var(--ink-soft);
 }
- 
+
 .toolbar select {
   appearance: none;
   -webkit-appearance: none;
@@ -778,18 +791,18 @@ body.dark .solve-btn {
   background-repeat: no-repeat;
   background-position: right 16px center;
 }
- 
+
 .toolbar .row {
   display: flex;
   gap: 8px;
   margin-top: 10px;
 }
- 
+
 .toolbar .row select {
   flex: 1;
   min-width: 0;
 }
- 
+
 .chips,
 .view-tabs {
   display: flex;
@@ -798,7 +811,7 @@ body.dark .solve-btn {
   gap: 8px;
   margin-top: 14px;
 }
- 
+
 .chip,
 .tab {
   padding: 9px 18px;
@@ -812,42 +825,42 @@ body.dark .solve-btn {
   cursor: pointer;
   transition: background 0.15s ease;
 }
- 
+
 .chip:hover,
 .tab:hover {
   background: rgba(255, 255, 255, 0.75);
 }
- 
+
 .chip.active,
 .tab.active {
   background: #fff;
   color: var(--brand);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
 }
- 
+
 /* ----- Map view of all posts ----- */
 .view-map-box {
   max-width: 720px;
   margin: 16px auto;
 }
- 
+
 #viewMap {
   height: 60vh;
   min-height: 340px;
   border-radius: 22px;
   box-shadow: var(--shadow);
 }
- 
+
 /* Leaflet popups match the cards */
 .leaflet-popup-content-wrapper {
   border-radius: 14px;
   font-family: var(--font);
 }
- 
+
 /* =========================================================
    MISC
    ========================================================= */
- 
+
 /* ----- Photo viewer ----- */
 .lightbox {
   position: fixed;
@@ -859,13 +872,13 @@ body.dark .solve-btn {
   background: rgba(0, 0, 0, 0.88);
   cursor: zoom-out;
 }
- 
+
 .lightbox img {
   max-width: 95vw;
   max-height: 90vh;
   border-radius: 14px;
 }
- 
+
 /* ----- Pop-up messages ----- */
 .toasts {
   position: fixed;
@@ -879,7 +892,7 @@ body.dark .solve-btn {
   transform: translateX(-50%);
   pointer-events: none;
 }
- 
+
 .toast {
   padding: 13px 16px;
   border-radius: 14px;
@@ -890,19 +903,19 @@ body.dark .solve-btn {
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38);
   animation: toastIn 0.25s ease, toastOut 0.4s ease 3s forwards;
 }
- 
+
 .toast.success { background: rgb(18, 140, 90); }
 .toast.error   { background: rgb(210, 40, 70); }
- 
+
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
- 
+
 @keyframes toastOut {
   to { opacity: 0; transform: translateY(12px); }
 }
- 
+
 /* ----- Feed status and footer ----- */
 .feed-status {
   text-align: center;
@@ -910,7 +923,7 @@ body.dark .solve-btn {
   font-weight: 700;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
- 
+
 .footer {
   margin: 30px auto 10px;
   text-align: center;
@@ -919,7 +932,7 @@ body.dark .solve-btn {
   font-weight: 500;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
- 
+
 /* =========================================================
    LARGER SCREENS: feed becomes two columns
    ========================================================= */
@@ -931,13 +944,13 @@ body.dark .solve-btn {
     max-width: 920px;
     margin: 0 auto;
   }
- 
+
   #feed .card {
     max-width: none;
     margin: 0;
   }
 }
- 
+
 /* ----- Respect "reduce motion" ----- */
 @media (prefers-reduced-motion: reduce) {
   *,
