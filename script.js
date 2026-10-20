@@ -94,6 +94,28 @@ function timeAgo(iso) {
   return days + (days === 1 ? " day ago" : " days ago");
 }
 
+function formatDateTime(iso) {
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+// how long it took from posting to solving, e.g. "3 hours"
+function timeBetween(startIso, endIso) {
+  const mins = Math.round((new Date(endIso) - new Date(startIso)) / 60000);
+  if (mins < 1) return "under a minute";
+  if (mins < 60) return mins + " min";
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + (hours === 1 ? " hour" : " hours");
+  const days = Math.floor(hours / 24);
+  return days + (days === 1 ? " day" : " days");
+}
+
 function distanceKm(lat1, lng1, lat2, lng2) {
   const toRad = function (d) { return d * Math.PI / 180; };
   const dLat = toRad(lat2 - lat1);
@@ -458,7 +480,10 @@ async function setSolved(id, solved) {
 
   const { error } = await db
     .from("items")
-    .update({ status: solved ? "solved" : "open" })
+    .update({
+      status: solved ? "solved" : "open",
+      solved_at: solved ? new Date().toISOString() : null
+    })
     .eq("id", id);
 
   if (error) {
@@ -778,16 +803,20 @@ function render() {
     placeLine.textContent = "📍 " + (item.type === "lost" ? "Lost at: " : "Found at: ") + item.place;
 
     const timeLine = document.createElement("p");
-    timeLine.textContent = "🕒 Posted " + new Date(item.created_at).toLocaleString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true
-    }) + " (" + timeAgo(item.created_at) + ")";
+    timeLine.textContent = "🕒 Posted " + formatDateTime(item.created_at) +
+      " (" + timeAgo(item.created_at) + ")";
 
     card.append(nameLine, placeLine, timeLine);
+
+    // when the case was resolved, and how long it took
+    if (solved && item.solved_at) {
+      const resolvedLine = document.createElement("p");
+      resolvedLine.className = "resolved-line";
+      resolvedLine.textContent = "✅ Resolved " + formatDateTime(item.solved_at) +
+        " (" + timeAgo(item.solved_at) + ") · took " +
+        timeBetween(item.created_at, item.solved_at);
+      card.append(resolvedLine);
+    }
 
     if (item._dist !== null) {
       const distLine = document.createElement("p");
