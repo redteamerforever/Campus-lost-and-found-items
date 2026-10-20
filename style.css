@@ -963,11 +963,10 @@ body.dark .solve-btn {
 }
 
 /* =========================================================
-   CURSOR LIGHT
-   A soft light follows the mouse across the page, and each
-   card / form lights up under the cursor when you hover it.
-   script.js feeds the position into --cursor-x/y (page) and
-   --mx/--my (inside a card). Mouse devices only.
+   CURSOR + TOUCH LIGHT
+   A soft light follows the mouse (or your finger on a phone).
+   Cards light up under the pointer. On touch screens there is
+   no :hover, so script.js adds the class .lit instead.
    ========================================================= */
 :root {
   --page-glow: rgba(255, 255, 255, 0.38);
@@ -982,71 +981,78 @@ body.dark {
   --glow: rgba(167, 139, 255, 0.24);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  /* big soft light on the page background */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: var(--glow-on);
-    transition: opacity 0.4s ease;
-    background:
-      radial-gradient(
-        480px circle at var(--cursor-x, 50%) var(--cursor-y, 25%),
-        var(--page-glow),
-        transparent 65%
-      ),
-      radial-gradient(
-        850px circle at var(--cursor-x, 50%) var(--cursor-y, 25%),
-        var(--page-glow-2),
-        transparent 65%
-      );
-  }
-
-  /* spotlight inside a card, stat box or form */
-  .card,
-  .stat-card,
-  .post-form {
-    position: relative;
-  }
-
-  .card::after,
-  .stat-card::after,
-  .post-form::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    background: radial-gradient(
-      300px circle at var(--mx, 50%) var(--my, 50%),
-      var(--glow),
-      transparent 70%
+/* big soft light on the page background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--glow-on);
+  transition: opacity 0.4s ease;
+  background:
+    radial-gradient(
+      480px circle at var(--cursor-x, 50%) var(--cursor-y, 25%),
+      var(--page-glow),
+      transparent 65%
+    ),
+    radial-gradient(
+      850px circle at var(--cursor-x, 50%) var(--cursor-y, 25%),
+      var(--page-glow-2),
+      transparent 65%
     );
-  }
+}
 
+/* spotlight inside a card, stat box or form */
+.card,
+.stat-card,
+.post-form {
+  position: relative;
+}
+
+.card::after,
+.stat-card::after,
+.post-form::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: radial-gradient(
+    300px circle at var(--mx, 50%) var(--my, 50%),
+    var(--glow),
+    transparent 70%
+  );
+}
+
+/* .lit is added by JS while a finger is on the card (touch screens) */
+.card.lit::after,
+.stat-card.lit::after,
+.post-form.lit::after {
+  opacity: 1;
+}
+
+/* keep the real content above the spotlight layer */
+.card > *,
+.stat-card > *,
+.post-form > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* mouse-only extras: real hover exists only here */
+@media (hover: hover) and (pointer: fine) {
   .card:hover::after,
   .stat-card:hover::after,
   .post-form:hover::after {
     opacity: 1;
-  }
-
-  /* keep the real content above the spotlight layer */
-  .card > *,
-  .stat-card > *,
-  .post-form > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* little lift on the counters */
-  .stat-card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
 
   .stat-card:hover {
@@ -1063,106 +1069,3 @@ body.dark {
     display: none;
   }
 }
-
-/* =========================================================
-   CURSOR LIGHT
-   A soft light follows the mouse across the page, and each
-   card / form lights up under the cursor when you hover it.
-   script.js feeds the position into --cursor-x/y (page) and
-   --mx/--my (inside a card). Mouse devices only.
-   ========================================================= */
-:root {
-  --page-glow: rgba(255, 255, 255, 0.38);
-  --page-glow-2: rgba(255, 214, 120, 0.16);
-  --glow: rgba(122, 86, 240, 0.18);
-  --glow-on: 1;
-}
-
-body.dark {
-  --page-glow: rgba(140, 110, 255, 0.30);
-  --page-glow-2: rgba(63, 212, 154, 0.10);
-  --glow: rgba(167, 139, 255, 0.24);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  /* big soft light on the page background */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: var(--glow-on);
-    transition: opacity 0.4s ease;
-    background:
-      radial-gradient(
-        480px circle at var(--cursor-x, 50%) var(--cursor-y, 25%),
-        var(--page-glow),
-        transparent 65%
-      ),
-      radial-gradient(
-        850px circle at var(--cursor-x, 50%) var(--cursor-y, 25%),
-        var(--page-glow-2),
-        transparent 65%
-      );
-  }
-
-  /* spotlight inside a card, stat box or form */
-  .card,
-  .stat-card,
-  .post-form {
-    position: relative;
-  }
-
-  .card::after,
-  .stat-card::after,
-  .post-form::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    background: radial-gradient(
-      300px circle at var(--mx, 50%) var(--my, 50%),
-      var(--glow),
-      transparent 70%
-    );
-  }
-
-  .card:hover::after,
-  .stat-card:hover::after,
-  .post-form:hover::after {
-    opacity: 1;
-  }
-
-  /* keep the real content above the spotlight layer */
-  .card > *,
-  .stat-card > *,
-  .post-form > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* little lift on the counters */
-  .stat-card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(38, 28, 90, 0.28);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body::before,
-  .card::after,
-  .stat-card::after,
-  .post-form::after {
-    display: none;
-  }
-}
-
