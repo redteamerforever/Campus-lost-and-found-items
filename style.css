@@ -1069,3 +1069,111 @@ body::before {
     display: none;
   }
 }
+
+/* =========================================================
+   POP ANIMATION FOR EVERYTHING CLICKABLE
+   hover  -> lifts and grows a little (mouse only)
+   press  -> squishes in (mouse AND touch)
+   select -> chips / tabs bounce when they become active
+   ========================================================= */
+:root {
+  --pop: cubic-bezier(0.34, 1.56, 0.64, 1);   /* springy overshoot */
+}
+
+/* 1. give every clickable thing a springy transition */
+.cta,
+.chip,
+.tab,
+.share-btn,
+.map-link,
+.wa-btn,
+.solve-btn,
+.reopen-btn,
+.delete-btn,
+.pick-btn,
+.post-form .loc-btn,
+.post-form .map-close,
+.toolbar input,
+.toolbar select,
+.stat-card {
+  transition:
+    transform 0.25s var(--pop),
+    box-shadow 0.25s ease,
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+/* 2. HOVER pop (only on devices that really have hover, so phones
+      don't get "stuck" enlarged after a tap) */
+@media (hover: hover) and (pointer: fine) {
+  .cta:hover,
+  .chip:hover,
+  .tab:hover,
+  .share-btn:hover,
+  .map-link:hover,
+  .wa-btn:hover,
+  .solve-btn:hover,
+  .reopen-btn:hover,
+  .delete-btn:hover,
+  .pick-btn:hover,
+  .post-form .loc-btn:hover,
+  .toolbar select:hover,
+  .toolbar input:hover {
+    transform: translateY(-3px) scale(1.05);
+  }
+
+  .post-form .map-close:hover {
+    transform: scale(1.12) rotate(90deg);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px) scale(1.04);
+  }
+}
+
+/* 3. PRESS pop: works for mouse click AND finger tap */
+.cta:active,
+.chip:active,
+.tab:active,
+.share-btn:active,
+.map-link:active,
+.wa-btn:active,
+.solve-btn:active,
+.reopen-btn:active,
+.delete-btn:active,
+.pick-btn:active,
+.post-form .loc-btn:active,
+.post-form .map-close:active,
+.toolbar select:active,
+.stat-card:active {
+  transform: scale(0.94);
+  transition-duration: 0.08s;
+}
+
+/* 4. FOCUS pop: the search box grows a little while you type */
+.toolbar input:focus,
+.toolbar select:focus {
+  transform: scale(1.02);
+}
+
+/* 5. SELECT bounce: chips and tabs spring when they become active */
+.chip.active,
+.tab.active {
+  animation: selectPop 0.4s var(--pop);
+}
+
+@keyframes selectPop {
+  0%   { transform: scale(0.88); }
+  60%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* 6. people who turned off motion get no pop at all */
+@media (prefers-reduced-motion: reduce) {
+  .cta, .chip, .tab, .share-btn, .map-link, .wa-btn, .solve-btn,
+  .reopen-btn, .delete-btn, .pick-btn, .post-form .loc-btn,
+  .post-form .map-close, .toolbar input, .toolbar select, .stat-card {
+    transform: none !important;
+    animation: none !important;
+  }
+}
