@@ -1176,4 +1176,10 @@ body::before {
     transform: none !important;
     animation: none !important;
   }
+
+   /* resolved time on solved cards */
+.resolved-line {
+  color: var(--found);
+  font-weight: 700;
+}
 }
