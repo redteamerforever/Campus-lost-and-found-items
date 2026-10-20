@@ -967,14 +967,13 @@ async function start() {
 
 start();
 
-// ===== 18. CURSOR LIGHT (feeds the glow effect in style.css) =====
+// ===== 18. CURSOR + TOUCH LIGHT (feeds the glow effect in style.css) =====
 (function () {
-  // only for real mouse devices, and not if the user asked for less motion
-  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const root = document.documentElement;
   const BOXES = ".card, .stat-card, .post-form";
+  const isTouchDevice = window.matchMedia("(hover: none)").matches;
 
   let targetX = window.innerWidth / 2;
   let targetY = window.innerHeight * 0.25;
@@ -983,11 +982,17 @@ start();
   let lastX = targetX;
   let lastY = targetY;
   let running = false;
+  let touching = false;
+  let litBox = null;
+  let fadeTimer = null;
 
-  // page glow: glides after the cursor
+  // on phones the light stays hidden until a finger touches the screen
+  if (isTouchDevice) root.style.setProperty("--glow-on", "0");
+
+  // page glow: glides after the pointer / finger
   function tick() {
-    x += (targetX - x) * 0.15;
-    y += (targetY - y) * 0.15;
+    x += (targetX - x) * 0.18;
+    y += (targetY - y) * 0.18;
     root.style.setProperty("--cursor-x", x.toFixed(1) + "px");
     root.style.setProperty("--cursor-y", y.toFixed(1) + "px");
 
@@ -1004,28 +1009,65 @@ start();
     requestAnimationFrame(tick);
   }
 
-  // spotlight inside the card / form under the cursor
+  // spotlight inside the card / form under the pointer or finger
   function lightBox(clientX, clientY, el) {
     const box = el && el.closest ? el.closest(BOXES) : null;
+
+    if (litBox && litBox !== box) litBox.classList.remove("lit");
+    litBox = box;
     if (!box) return;
+
     const r = box.getBoundingClientRect();
     box.style.setProperty("--mx", (clientX - r.left) + "px");
     box.style.setProperty("--my", (clientY - r.top) + "px");
+    if (touching) box.classList.add("lit"); // touch has no :hover, so we use a class
   }
 
-  window.addEventListener("pointermove", function (e) {
-    if (e.pointerType === "touch") return;
-    targetX = lastX = e.clientX;
-    targetY = lastY = e.clientY;
+  function moveLight(clientX, clientY, el) {
+    targetX = lastX = clientX;
+    targetY = lastY = clientY;
+    clearTimeout(fadeTimer);
     root.style.setProperty("--glow-on", "1");
     startTick();
-    lightBox(e.clientX, e.clientY, e.target);
+    lightBox(clientX, clientY, el);
+  }
+
+  // MOUSE and PEN
+  window.addEventListener("pointermove", function (e) {
+    if (e.pointerType === "touch") return;
+    moveLight(e.clientX, e.clientY, e.target);
   }, { passive: true });
 
-  // when you scroll, cards move under a still mouse, so refresh the spotlight
+  // TOUCH: the light follows the finger, even while scrolling
+  function onTouch(e) {
+    const t = e.touches[0];
+    if (!t) return;
+    touching = true;
+    // for touchmove, e.target stays the first element touched,
+    // so we ask the browser what is under the finger right now
+    moveLight(t.clientX, t.clientY, document.elementFromPoint(t.clientX, t.clientY));
+  }
+
+  function onTouchEnd() {
+    touching = false;
+    clearTimeout(fadeTimer);
+    // let the light linger for a moment, then fade it out
+    fadeTimer = setTimeout(function () {
+      root.style.setProperty("--glow-on", "0");
+      if (litBox) litBox.classList.remove("lit");
+      litBox = null;
+    }, 700);
+  }
+
+  window.addEventListener("touchstart", onTouch, { passive: true });
+  window.addEventListener("touchmove", onTouch, { passive: true });
+  window.addEventListener("touchend", onTouchEnd, { passive: true });
+  window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+  // mouse users: when you scroll, cards move under a still mouse
   let scrollQueued = false;
   window.addEventListener("scroll", function () {
-    if (scrollQueued) return;
+    if (touching || scrollQueued) return;
     scrollQueued = true;
     requestAnimationFrame(function () {
       scrollQueued = false;
@@ -1033,7 +1075,7 @@ start();
     });
   }, { passive: true });
 
-  // fade the page glow out when the mouse leaves the window
+  // mouse users: fade the glow when the mouse leaves the window
   document.documentElement.addEventListener("mouseleave", function () {
     root.style.setProperty("--glow-on", "0");
   });
