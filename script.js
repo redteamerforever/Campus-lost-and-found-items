@@ -1120,7 +1120,7 @@ start();
     const r = box.getBoundingClientRect();
     box.style.setProperty("--mx", (clientX - r.left) + "px");
     box.style.setProperty("--my", (clientY - r.top) + "px");
-    if (touching) box.classList.add("lit"); // touch has no :hover, so we use a class
+    if (box) box.classList.add("lit");
   }
 
   function moveLight(clientX, clientY, el) {
