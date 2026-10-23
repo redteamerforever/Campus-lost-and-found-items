@@ -1,7 +1,8 @@
-// ===== 1. SUPABASE SETUP: paste YOUR values here =====
+// ===== 1. SUPABASE SETUP =====
+// Replace these with your actual Supabase project URL and anon public key.
+// Never commit secret/service_role keys here.
 const SUPABASE_URL = "https://acqqbhaoukjarnijhgte.supabase.co";
 const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
-// (never paste the secret / service_role key here)
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -76,6 +77,17 @@ Object.keys(CATEGORIES).forEach(function (key) {
   categoryFilter.append(new Option(CATEGORIES[key], key));
 });
 categoryFilter.value = "all";
+
+function escapeHtml(text) {
+  if (!text) return "";
+  const div = document.createElement("div");
+  div.textContent = String(text);
+  return div.innerHTML;
+}
+
+function sanitizeInput(text) {
+  return String(text || "").trim().slice(0, 500);
+}
 
 // ===== 4. SMALL HELPERS =====
 function toast(message, kind) {
@@ -929,14 +941,14 @@ form.addEventListener("submit", async function (event) {
       imageUrl = db.storage.from("item-photos").getPublicUrl(path).data.publicUrl;
     }
 
-    // save the post
+    // save the post (sanitized inputs)
     const result = await db.from("items").insert({
-      type: document.getElementById("type").value,
-      category: categorySelect.value,
-      name: document.getElementById("name").value.trim(),
-      title: document.getElementById("title").value.trim(),
-      place: document.getElementById("place").value.trim(),
-      description: document.getElementById("description").value.trim(),
+      type: sanitizeInput(document.getElementById("type").value),
+      category: sanitizeInput(categorySelect.value),
+      name: sanitizeInput(document.getElementById("name").value),
+      title: sanitizeInput(document.getElementById("title").value),
+      place: sanitizeInput(document.getElementById("place").value),
+      description: sanitizeInput(document.getElementById("description").value),
       whatsapp: whatsapp,
       image_url: imageUrl,
       lat: pickedLocation ? pickedLocation.lat : null,
