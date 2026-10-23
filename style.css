@@ -353,15 +353,6 @@ body {
 
 .footer { margin: 48px auto 24px; text-align: center; color: var(--ink-muted); font-size: 13px; font-weight: 500; }
 
-/* Theme toggle */
-.theme-btn {
-  position: fixed; right: 20px; bottom: 20px; z-index: 1500; width: 52px; height: 52px;
-  border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #fff; font-size: 20px; cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4); transition: all 0.2s ease;
-}
-.theme-btn:hover { border-color: rgba(255,255,255,0.25); transform: rotate(-10deg) scale(1.08); box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
-
 /* ===== ANIMATIONS ===== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .card.pop { animation: popIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
