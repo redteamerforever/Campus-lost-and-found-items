@@ -4,7 +4,7 @@
   --cursor-x: 50vw;
   --cursor-y: 25vh;
   --glow-on: 1;
-  --bg: #f4f4f5;
+  --bg: #f0f4ff;
   --surface: rgba(0,0,0,0.03);
   --surface-2: rgba(0,0,0,0.05);
   --surface-card: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%);
@@ -99,9 +99,11 @@ body {
   color: var(--ink);
   background: var(--bg);
   background-image:
-    radial-gradient(circle 600px at var(--cursor-x) var(--cursor-y), rgba(139,92,246,0.35) 0%, transparent 55%),
-    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.15) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(244,63,94,0.12) 0%, transparent 60%);
+    radial-gradient(circle 700px at var(--cursor-x) var(--cursor-y), rgba(124,58,237,0.45) 0%, transparent 50%),
+    radial-gradient(circle 500px at var(--cursor-x) var(--cursor-y), rgba(16,185,129,0.25) 0%, transparent 50%),
+    radial-gradient(circle 400px at var(--cursor-x) var(--cursor-y), rgba(244,63,94,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.2) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(244,63,94,0.15) 0%, transparent 60%);
   background-attachment: fixed;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
