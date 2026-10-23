@@ -162,6 +162,7 @@ function animateCount(el, target) {
 // ===== 5. DARK MODE =====
 function applyTheme(dark) {
   document.body.classList.toggle("dark", dark);
+  document.body.classList.toggle("light", !dark);
   themeBtn.textContent = dark ? "☀️" : "🌙";
   try {
     localStorage.setItem("theme", dark ? "dark" : "light");
@@ -173,6 +174,7 @@ try {
   savedTheme = localStorage.getItem("theme");
 } catch (e) {}
 applyTheme(savedTheme === "dark");
+if (savedTheme !== "dark") document.body.classList.add("light");
 
 themeBtn.addEventListener("click", function () {
   applyTheme(!document.body.classList.contains("dark"));
@@ -508,6 +510,28 @@ async function setSolved(id, solved) {
     celebrate();
     toast("Case solved! 🎉", "success");
   }
+}
+
+function editItem(item) {
+  // Pre-fill the form with existing post data
+  document.getElementById("type").value = item.type || "lost";
+  categorySelect.value = item.category || "other";
+  document.getElementById("name").value = item.name || "";
+  document.getElementById("title").value = item.title || "";
+  document.getElementById("description").value = item.description || "";
+  document.getElementById("place").value = item.place || "";
+  document.getElementById("whatsapp").value = item.whatsapp ? (item.whatsapp.startsWith("91") ? item.whatsapp.slice(2) : item.whatsapp) : "";
+  selectedFile = null;
+  pickedLocation = item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null;
+  photoStatus.textContent = item.image_url ? "Existing photo will be kept unless replaced" : "";
+  locationStatus.textContent = pickedLocation ? "Previous location kept" : "";
+
+  form.hidden = false;
+  form.scrollIntoView({ behavior: "smooth" });
+  openPostBtn.textContent = "Cancel edit";
+
+  // Store the item id being edited
+  form.dataset.editId = item.id;
 }
 
 function celebrate() {
@@ -895,6 +919,15 @@ function render() {
       });
       card.append(solveBtn);
 
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "delete-btn";
+      editBtn.textContent = "✏️ Edit my post";
+      editBtn.addEventListener("click", function () {
+        editItem(item);
+      });
+      card.append(editBtn);
+
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "delete-btn";
@@ -922,10 +955,12 @@ form.addEventListener("submit", async function (event) {
   }
 
   postBtn.disabled = true;
-  postBtn.textContent = "Posting...";
+  const editId = form.dataset.editId;
+  postBtn.textContent = editId ? "Saving..." : "Posting...";
 
   try {
     await ensureSignedIn();
+    const editId = form.dataset.editId;
 
     // upload the photo (if any) to Supabase Storage, inside your own folder
     let imageUrl = null;
@@ -941,25 +976,47 @@ form.addEventListener("submit", async function (event) {
       imageUrl = db.storage.from("item-photos").getPublicUrl(path).data.publicUrl;
     }
 
-    // save the post (sanitized inputs)
-    const result = await db.from("items").insert({
-      type: sanitizeInput(document.getElementById("type").value),
-      category: sanitizeInput(categorySelect.value),
-      name: sanitizeInput(document.getElementById("name").value),
-      title: sanitizeInput(document.getElementById("title").value),
-      place: sanitizeInput(document.getElementById("place").value),
-      description: sanitizeInput(document.getElementById("description").value),
-      whatsapp: whatsapp,
-      image_url: imageUrl,
-      lat: pickedLocation ? pickedLocation.lat : null,
-      lng: pickedLocation ? pickedLocation.lng : null
-    });
-    if (result.error) throw result.error;
+    let result;
+    if (editId) {
+      // Editing existing post
+      const updates = {
+        type: sanitizeInput(document.getElementById("type").value),
+        category: sanitizeInput(categorySelect.value),
+        name: sanitizeInput(document.getElementById("name").value),
+        title: sanitizeInput(document.getElementById("title").value),
+        place: sanitizeInput(document.getElementById("place").value),
+        description: sanitizeInput(document.getElementById("description").value),
+        whatsapp: whatsapp,
+        lat: pickedLocation ? pickedLocation.lat : null,
+        lng: pickedLocation ? pickedLocation.lng : null
+      };
+      if (imageUrl !== null) updates.image_url = imageUrl;
+      else if (selectedFile === null && form.querySelector('input[name="clear_photo"]')) updates.image_url = null;
+
+      result = await db.from("items").update(updates).eq("id", editId);
+      if (result.error) throw result.error;
+    } else {
+      // New post
+      result = await db.from("items").insert({
+        type: sanitizeInput(document.getElementById("type").value),
+        category: sanitizeInput(categorySelect.value),
+        name: sanitizeInput(document.getElementById("name").value),
+        title: sanitizeInput(document.getElementById("title").value),
+        place: sanitizeInput(document.getElementById("place").value),
+        description: sanitizeInput(document.getElementById("description").value),
+        whatsapp: whatsapp,
+        image_url: imageUrl,
+        lat: pickedLocation ? pickedLocation.lat : null,
+        lng: pickedLocation ? pickedLocation.lng : null
+      });
+      if (result.error) throw result.error;
+    }
 
     await loadItems();
 
     // reset and close the form
     form.reset();
+    delete form.dataset.editId;
     selectedFile = null;
     pickedLocation = null;
     photoStatus.textContent = "";
@@ -967,14 +1024,16 @@ form.addEventListener("submit", async function (event) {
     if (map) resetMap();
     form.hidden = true;
 
-    toast("Posted! 🎉", "success");
+    const msg = editId ? "Updated! ✏️" : "Posted! 🎉";
+    toast(msg, "success");
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (err) {
     console.error(err);
     toast("Could not post: " + (err.message || err), "error");
   } finally {
     postBtn.disabled = false;
-    postBtn.textContent = "Post";
+    const editId = form.dataset.editId;
+    postBtn.textContent = editId ? "Save edit" : "Post";
   }
 });
 
