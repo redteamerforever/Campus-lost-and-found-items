@@ -163,7 +163,7 @@ function animateCount(el, target) {
 function applyTheme(dark) {
   document.body.classList.toggle("dark", true);
   document.body.classList.remove("light");
-  themeBtn.textContent = "🌙";
+  if (themeBtn) themeBtn.textContent = "🌙";
 }
 
 let savedTheme = null;
@@ -173,10 +173,10 @@ try {
 applyTheme(true);
 
 // Theme always dark, button kept for visual consistency
-themeBtn.addEventListener("click", function () {
+if (themeBtn) themeBtn.addEventListener("click", function () {
   document.body.classList.add("dark");
   document.body.classList.remove("light");
-  themeBtn.textContent = "🌙";
+  if (themeBtn) themeBtn.textContent = "🌙";
 });
 
 // open / close the post form
