@@ -161,9 +161,10 @@ function animateCount(el, target) {
 
 // ===== 5. DARK MODE =====
 function applyTheme(dark) {
-  document.body.classList.toggle("dark", dark);
-  document.body.classList.toggle("light", !dark);
-  themeBtn.textContent = dark ? "☀️" : "🌙";
+  document.body.classList.toggle("dark", true);
+  document.body.classList.remove("light");
+  themeBtn.textContent = "🌙";
+}
   try {
     localStorage.setItem("theme", dark ? "dark" : "light");
   } catch (e) {}
@@ -173,11 +174,13 @@ let savedTheme = null;
 try {
   savedTheme = localStorage.getItem("theme");
 } catch (e) {}
-applyTheme(savedTheme === "dark");
-if (savedTheme !== "dark") document.body.classList.add("light");
+applyTheme(true);
 
+// Theme always dark, button kept for visual consistency
 themeBtn.addEventListener("click", function () {
-  applyTheme(!document.body.classList.contains("dark"));
+  document.body.classList.add("dark");
+  document.body.classList.remove("light");
+  themeBtn.textContent = "🌙";
 });
 
 // open / close the post form
