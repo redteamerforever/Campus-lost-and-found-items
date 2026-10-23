@@ -1,27 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-.light {
-  --cursor-x: 50vw;
-  --cursor-y: 25vh;
-  --glow-on: 1;
-  --bg: #f4f4f5;
-  --surface: rgba(0,0,0,0.03);
-  --surface-2: rgba(0,0,0,0.05);
-  --surface-card: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%);
-  --ink: #18181b;
-  --ink-soft: #52525b;
-  --ink-muted: #71717a;
-  --brand: #7c3aed;
-  --brand-glow: rgba(124,58,237,0.35);
-  --lost: #e11d48;
-  --found: #059669;
-  --warn: #d97706;
-  --shadow-card: 0 24px 60px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.06);
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.1);
-  --border: rgba(0,0,0,0.08);
-  --border-hover: rgba(0,0,0,0.15);
-}
-
 .dark {
   --cursor-x: 50vw;
   --cursor-y: 25vh;
@@ -99,11 +77,9 @@ body {
   color: var(--ink);
   background: var(--bg);
   background-image:
-    radial-gradient(circle 700px at var(--cursor-x) var(--cursor-y), rgba(124,58,237,0.45) 0%, transparent 50%),
-    radial-gradient(circle 500px at var(--cursor-x) var(--cursor-y), rgba(16,185,129,0.25) 0%, transparent 50%),
-    radial-gradient(circle 400px at var(--cursor-x) var(--cursor-y), rgba(244,63,94,0.2) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.2) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(244,63,94,0.15) 0%, transparent 60%);
+    radial-gradient(circle at 20% 10%, rgba(139,92,246,0.15) 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.1) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(244,63,94,0.08) 0%, transparent 60%);
   background-attachment: fixed;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
