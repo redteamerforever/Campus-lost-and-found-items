@@ -23,6 +23,9 @@
 }
 
 .dark {
+  --cursor-x: 50vw;
+  --cursor-y: 25vh;
+  --glow-on: 1;
   --bg: #06060a;
   --surface: rgba(255,255,255,0.03);
   --surface-2: rgba(255,255,255,0.06);
@@ -54,6 +57,9 @@ body.dark, body:not(.light) {
 }
 
 :root {
+  --cursor-x: 50vw;
+  --cursor-y: 25vh;
+  --glow-on: 1;
   --font-body: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 
