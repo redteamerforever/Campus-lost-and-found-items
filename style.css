@@ -99,9 +99,11 @@ body {
   color: var(--ink);
   background: var(--bg);
   background-image:
-    radial-gradient(circle at var(--cursor-x) var(--cursor-y), rgba(139,92,246,0.18) 0%, transparent 45%),
-    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.1) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(244,63,94,0.08) 0%, transparent 60%);
+    radial-gradient(circle 700px at var(--cursor-x) var(--cursor-y), rgba(124,58,237,0.45) 0%, transparent 50%),
+    radial-gradient(circle 500px at var(--cursor-x) var(--cursor-y), rgba(16,185,129,0.25) 0%, transparent 50%),
+    radial-gradient(circle 400px at var(--cursor-x) var(--cursor-y), rgba(244,63,94,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.2) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(244,63,94,0.15) 0%, transparent 60%);
   background-attachment: fixed;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
