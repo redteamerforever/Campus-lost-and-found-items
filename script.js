@@ -165,10 +165,6 @@ function applyTheme(dark) {
   document.body.classList.remove("light");
   themeBtn.textContent = "🌙";
 }
-  try {
-    localStorage.setItem("theme", dark ? "dark" : "light");
-  } catch (e) {}
-}
 
 let savedTheme = null;
 try {
