@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#6f86d6">
+  <meta name="theme-color" content="#06060a">
+  <meta name="description" content="Campus Lost & Found — reconnect lost items with their owners.">
   <title>Campus Lost & Found</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -17,15 +19,15 @@
   </header>
 
   <div class="stat-cards">
-    <div class="stat-card"><span id="statLost" class="stat-num">0</span><span class="stat-label">🔴 Lost</span></div>
-    <div class="stat-card"><span id="statFound" class="stat-num">0</span><span class="stat-label">🟢 Found</span></div>
-    <div class="stat-card"><span id="statSolved" class="stat-num">0</span><span class="stat-label">🎉 Reunited</span></div>
+    <div class="stat-card"><span id="statLost" class="stat-num">0</span><span class="stat-label">Lost</span></div>
+    <div class="stat-card"><span id="statFound" class="stat-num">0</span><span class="stat-label">Found</span></div>
+    <div class="stat-card"><span id="statSolved" class="stat-num">0</span><span class="stat-label">Reunited</span></div>
   </div>
 
   <ol class="steps">
     <li><b>1</b> Post what you lost or found</li>
     <li><b>2</b> Get contacted on WhatsApp</li>
-    <li><b>3</b> Mark it as returned 🎉</li>
+    <li><b>3</b> Mark it as returned</li>
   </ol>
 
   <form class="post-form" id="postForm" hidden>
@@ -35,15 +37,14 @@
       <option value="found">Found</option>
     </select>
     <select id="category"></select>
-    <input type="text" id="name" placeholder="Your name" maxlength="60" required>
-    <input type="text" id="title" placeholder="Item name (e.g. Black wallet)" maxlength="100" required>
+    <input type="text" id="name" placeholder="Your name" maxlength="60" required autocomplete="name">
+    <input type="text" id="title" placeholder="Item name (e.g. Black wallet)" maxlength="100" required autocomplete="off">
     <textarea id="description" placeholder="Describe the item (colour, brand, size, marks...)" maxlength="500" rows="3" required></textarea>
     <p class="note">Tip: for found items, keep one detail to yourself so you can check the real owner.</p>
-    <input type="text" id="place" placeholder="Where did you lose or found it? (e.g. Library, 2nd floor)" maxlength="100" required>
-   <input type="tel" id="whatsapp" placeholder="WhatsApp number (e.g. 0123456789)" maxlength="10" pattern="[0-9]{10}" title="Enter a 10-digit number" required>
+    <input type="text" id="place" placeholder="Where did you lose or find it? (e.g. Library, 2nd floor)" maxlength="100" required>
+    <input type="tel" id="whatsapp" placeholder="WhatsApp number (e.g. 0123456789)" maxlength="10" pattern="[0-9]{10}" title="Enter a 10-digit number" required>
     <p class="note">Your WhatsApp number is shown on your post so people can contact you.</p>
 
-    <!-- PHOTO: camera or gallery -->
     <p class="photo-label">Photo (optional)</p>
     <div class="photo-buttons">
       <label for="cameraPhoto" class="pick-btn">📷 Take photo</label>
@@ -53,11 +54,10 @@
     <input type="file" id="galleryPhoto" class="hidden-input" accept="image/*">
     <p id="photoStatus" class="status"></p>
 
-    <!-- LOCATION: auto-detect or pin on map -->
     <p class="photo-label">Location (optional)</p>
     <div class="photo-buttons">
-      <button type="button" id="autoBtn" class="loc-btn">📡 Auto-detect</button>
-      <button type="button" id="pinBtn" class="loc-btn">📍 Pin on map</button>
+      <button type="button" id="autoBtn" class="loc-btn">Auto-detect</button>
+      <button type="button" id="pinBtn" class="loc-btn">Pin on map</button>
     </div>
     <div id="mapBox" class="map-box">
       <div class="map-head">
@@ -72,10 +72,8 @@
     <button type="submit">Post</button>
   </form>
 
-  <!-- SEARCH, FILTER, SORT, VIEW -->
   <div class="toolbar">
-    <input type="search" id="searchInput" placeholder="🔍 Search item, place or name">
-
+    <input type="search" id="searchInput" placeholder="Search item, place or name">
     <div class="row">
       <select id="categoryFilter"></select>
       <select id="sortSelect">
@@ -84,17 +82,15 @@
         <option value="nearest">Nearest to me</option>
       </select>
     </div>
-
     <div class="chips">
       <button type="button" class="chip active" data-filter="all">All</button>
       <button type="button" class="chip" data-filter="lost">Lost</button>
       <button type="button" class="chip" data-filter="found">Found</button>
-      <button type="button" class="chip" data-filter="solved">Solved ✅</button>
+      <button type="button" class="chip" data-filter="solved">Solved</button>
     </div>
-
     <div class="view-tabs">
-      <button type="button" class="tab active" data-view="list">📋 List</button>
-      <button type="button" class="tab" data-view="map">🗺️ Map</button>
+      <button type="button" class="tab active" data-view="list">List</button>
+      <button type="button" class="tab" data-view="map">Map</button>
     </div>
   </div>
 
@@ -106,7 +102,7 @@
     <p id="mapNote" class="feed-status"></p>
   </div>
 
-  <footer class="footer">Made for our campus 💙 · Posts expire automatically after 7 days</footer>
+  <footer class="footer">Made for our campus · Posts expire automatically after 7 days</footer>
 
   <div id="toasts" class="toasts"></div>
 
