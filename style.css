@@ -1,5 +1,58 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
+.light {
+  --cursor-x: 50vw;
+  --cursor-y: 25vh;
+  --glow-on: 1;
+  --bg: #f4f4f5;
+  --surface: rgba(0,0,0,0.03);
+  --surface-2: rgba(0,0,0,0.05);
+  --surface-card: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%);
+  --ink: #18181b;
+  --ink-soft: #52525b;
+  --ink-muted: #71717a;
+  --brand: #7c3aed;
+  --brand-glow: rgba(124,58,237,0.35);
+  --lost: #e11d48;
+  --found: #059669;
+  --warn: #d97706;
+  --shadow-card: 0 24px 60px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.06);
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.1);
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.15);
+}
+
+.dark {
+  --bg: #06060a;
+  --surface: rgba(255,255,255,0.03);
+  --surface-2: rgba(255,255,255,0.06);
+  --surface-card: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  --ink: #f2f2f7;
+  --ink-soft: #a1a1aa;
+  --ink-muted: #52525b;
+  --brand: #8b5cf6;
+  --brand-glow: rgba(139,92,246,0.35);
+  --lost: #f43f5e;
+  --found: #10b981;
+  --warn: #f59e0b;
+  --shadow-card: 0 24px 60px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.15);
+}
+
+/* Default to dark (existing behavior) */
+body.dark, body:not(.light) {
+  background: #06060a;
+  color: #f2f2f7;
+}
+
+.dark, body:not(.light) {
+  --cursor-x: 50vw;
+  --cursor-y: 25vh;
+  --glow-on: 1;
+}
+
 :root {
   --font-body: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
@@ -40,7 +93,7 @@ body {
   color: var(--ink);
   background: var(--bg);
   background-image:
-    radial-gradient(circle at 20% 10%, rgba(139,92,246,0.15) 0%, transparent 45%),
+    radial-gradient(circle at var(--cursor-x) var(--cursor-y), rgba(139,92,246,0.18) 0%, transparent 45%),
     radial-gradient(circle at 80% 80%, rgba(16,185,129,0.1) 0%, transparent 45%),
     radial-gradient(circle at 50% 50%, rgba(244,63,94,0.08) 0%, transparent 60%);
   background-attachment: fixed;
@@ -256,6 +309,7 @@ body {
   transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 .card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); box-shadow: 0 28px 60px rgba(0,0,0,0.5); }
+.card.lit { background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(139,92,246,0.12), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)); }
 .card::before {
   content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 6px;
   border-radius: 999px; background: var(--brand);
