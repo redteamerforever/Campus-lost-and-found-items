@@ -7,9 +7,16 @@ const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
-    persistSession: true,      // keep the same anonymous user between visits
+    persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false
+  },
+  global: {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Prefer': 'return=representation'
+    }
   }
 });
 
