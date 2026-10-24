@@ -1012,7 +1012,8 @@ form.addEventListener("submit", async function (event) {
         whatsapp: whatsapp,
         image_url: imageUrl,
         lat: pickedLocation ? pickedLocation.lat : null,
-        lng: pickedLocation ? pickedLocation.lng : null
+        lng: pickedLocation ? pickedLocation.lng : null,
+        owner_id: currentUserId
       });
       if (result.error) throw result.error;
     }
