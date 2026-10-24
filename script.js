@@ -999,7 +999,7 @@ form.addEventListener("submit", async function (event) {
       else if (selectedFile === null && form.querySelector('input[name="clear_photo"]')) updates.image_url = null;
 
       result = await db.from("items").update(updates).eq("id", editId).eq("owner_id", currentUserId).select();
-      console.log("Edit result:", result);
+      console.log("Edit result:", result, "currentUserId:", currentUserId, "editId:", editId);
       if (result.error) throw result.error;
     } else {
       // New post
