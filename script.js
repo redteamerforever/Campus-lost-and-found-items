@@ -22,7 +22,6 @@ const CATEGORIES = {
   bag: "🎒 Bag",
   books: "📚 Books",
   electronics: "💻 Electronics",
-  clothing: "👕 Clothing",
   other: "📦 Other"
 };
 
@@ -992,7 +991,7 @@ form.addEventListener("submit", async function (event) {
       if (imageUrl !== null) updates.image_url = imageUrl;
       else if (selectedFile === null && form.querySelector('input[name="clear_photo"]')) updates.image_url = null;
 
-      result = await db.from("items").update(updates).eq("id", editId);
+      result = await db.from("items").update(updates).eq("id", editId).eq("owner_id", currentUserId);
       if (result.error) throw result.error;
     } else {
       // New post
