@@ -1073,8 +1073,9 @@ async function start() {
 
 start();
 
-// ===== 18. CURSOR + TOUCH LIGHT (feeds the glow effect in style.css) =====
+// ===== 18. CURSOR + TOUCH LIGHT =====
 (function () {
+  try {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const root = document.documentElement;
@@ -1188,4 +1189,5 @@ start();
   document.documentElement.addEventListener("mouseenter", function () {
     root.style.setProperty("--glow-on", "1");
   });
+  } catch (e) {}
 })();
