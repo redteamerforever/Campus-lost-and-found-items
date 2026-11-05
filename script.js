@@ -1281,28 +1281,34 @@ form.addEventListener("submit", async function (event) {
       if (imageUrl !== null) updates.image_url = imageUrl;
       else if (selectedFile === null && form.querySelector('input[name="clear_photo"]')) updates.image_url = null;
 
-      result = await db.from("items").update(updates).eq("id", editId).eq("owner_id", currentUserId).select();
+      result = await db.from("items").update(updates).eq("id", editId).eq("owner_id", currentUserId);
       console.log("Edit result:", result, "currentUserId:", currentUserId, "editId:", editId);
       if (result.error) throw result.error;
       
-      // Use returned updated data immediately
-      console.log("Before merge - items length:", items.length);
-      console.log("Looking for editId:", editId);
-      if (result.data && result.data.length > 0) {
-        const updatedItem = result.data[0];
-        console.log("Updated item from DB:", updatedItem);
-        // Update local items array directly for instant UI refresh
+      // Fetch updated item since .select() may not return data due to RLS
+      const { data: updatedData, error: fetchError } = await db
+        .from("items")
+        .select("*")
+        .eq("id", editId)
+        .single();
+      
+      console.log("Fetched updated item:", updatedData, fetchError);
+      
+      if (!fetchError && updatedData) {
+        console.log("Before merge - items length:", items.length);
+        console.log("Looking for editId:", editId);
         const index = items.findIndex(item => item.id === editId);
         console.log("Found index:", index);
         if (index !== -1) {
           console.log("Before merge:", items[index]);
-          items[index] = { ...items[index], ...updatedItem };
+          items[index] = { ...items[index], ...updatedData };
           console.log("After merge:", items[index]);
         } else {
           console.log("Item not found in local array!");
         }
       } else {
-        console.log("No data returned from update!");
+        console.log("Could not fetch updated item, reloading...");
+        await loadItems();
       }
     } else {
       // New post
