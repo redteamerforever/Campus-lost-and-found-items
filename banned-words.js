@@ -156,6 +156,51 @@ const BANNED_WORDS = {
     'kaam', 'kaamuk', 'kaamini', 'vasna', 'vasana', 'ichha', 'ichcha', 'tarse', 'tarsao',
     'majboor', 'majboori', 'dabao', 'dabaao', 'zor', 'zabardasti', 'balatkar', 'balatkaar',
     'chhed', 'chhedna', 'chhuo', 'chhuna', 'maslo', 'masalna', 'dabao', 'dabana'
+  ],
+  profanity: [
+    // English profanity
+    'fuck', 'fucking', 'fucker', 'motherfucker', 'motherfucking',
+    'shit', 'shitting', 'shitty', 'bullshit', 'bullshitting',
+    'bitch', 'bitching', 'bitchy', 'sonofabitch', 'sonofbitch',
+    'ass', 'asshole', 'asshat', 'dumbass', 'smartass', 'jackass', 'badass',
+    'damn', 'dammit', 'goddamn', 'goddammit',
+    'hell', 'hellno',
+    'crap', 'crappy',
+    'piss', 'pissing', 'pissed', 'pissedoff',
+    'dick', 'dickhead', 'cock', 'cockhead', 'prick',
+    'pussy', 'cunt', 'twat',
+    'whore', 'ho', 'hoe', 'slut', 'slutty',
+    'bastard', 'bastards',
+    'wtf', 'stfu', 'gtfo', 'lmfao', 'fml',
+    // Hinglish profanity
+    'bhosdi', 'bhosdike', 'bhosdika', 'bhosdiwala',
+    'madarchod', 'madarchod', 'madarchoot',
+    'behenchod', 'behenchoot', 'behenchod',
+    'gaand', 'gaandu', 'gaandfat', 'gaandmasti',
+    'lund', 'lunda', 'lundebaaz', 'lundtopi',
+    'chut', 'chutia', 'chutiya', 'chutyapa',
+    'lavde', 'lavda', 'lavdeke',
+    'suar', 'suarke', 'suarkebachche',
+    'kamine', 'kamina', 'kamini',
+    'harami', 'haramzada', 'haramzadi',
+    'randi', 'randibaaz', 'randikaput',
+    'chinal', 'chinali',
+    'bhadwa', 'bhadwi',
+    'gaandfaad', 'gaand maar', 'gaandmaro',
+    'lundkhus', 'lundchoos',
+    'chutmarani', 'chutkebaal',
+    'bhenke', 'bhenke', 'bhenkelund',
+    'madarke', 'madarke', 'madarkebachche',
+    // Variations with spaces/special chars
+    'f u c k', 'f u c k i n g',
+    's h i t', 'b i t c h',
+    'm f', 'mf', 'mtherfcker',
+    'bhenchod', 'behenchod', 'bhen choot',
+    'madar chod', 'madar choot',
+    'bhosdi ke', 'bhosdi ka',
+    'gaand mein', 'gaand me',
+    'lund ke', 'lund ka',
+    'chut ke', 'chut ka'
   ]
 };
 
