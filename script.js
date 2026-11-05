@@ -1292,7 +1292,8 @@ form.addEventListener("submit", async function (event) {
         .eq("id", editId)
         .single();
       
-      console.log("Fetched updated item:", updatedData, fetchError);
+      console.log("Fetched updated item:", updatedData, "fetchError:", fetchError);
+      console.log("updatedData type:", typeof updatedData, "is null:", updatedData === null);
       
       if (!fetchError && updatedData) {
         console.log("Before merge - items length:", items.length);
