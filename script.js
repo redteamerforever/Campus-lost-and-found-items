@@ -1284,6 +1284,16 @@ form.addEventListener("submit", async function (event) {
       result = await db.from("items").update(updates).eq("id", editId).eq("owner_id", currentUserId).select();
       console.log("Edit result:", result, "currentUserId:", currentUserId, "editId:", editId);
       if (result.error) throw result.error;
+      
+      // Use returned updated data immediately
+      if (result.data && result.data.length > 0) {
+        const updatedItem = result.data[0];
+        // Update local items array directly for instant UI refresh
+        const index = items.findIndex(item => item.id === editId);
+        if (index !== -1) {
+          items[index] = { ...items[index], ...updatedItem };
+        }
+      }
     } else {
       // New post
       result = await db.from("items").insert({
@@ -1474,4 +1484,5 @@ start();
     root.style.setProperty("--glow-on", "1");
   });
   } catch (e) {}
-})();
+})();CREATE POLICY "Users can delete own posts" ON items
+  FOR DELETE USING (auth.uid() = owner_id);
