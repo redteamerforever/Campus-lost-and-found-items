@@ -145,6 +145,51 @@ const BANNED_WORDS_LIBRARY = (function() {
       'kaam', 'kaamuk', 'kaamini', 'vasna', 'vasana', 'ichha', 'ichcha', 'tarse', 'tarsao',
       'majboor', 'majboori', 'dabao', 'dabaao', 'zor', 'zabardasti', 'balatkar', 'balatkaar',
       'chhed', 'chhedna', 'chhuo', 'chhuna', 'maslo', 'masalna', 'dabao', 'dabana'
+    ],
+    profanity: [
+      // English profanity
+      'fuck', 'fucking', 'fucker', 'motherfucker', 'motherfucking',
+      'shit', 'shitting', 'shitty', 'bullshit', 'bullshitting',
+      'bitch', 'bitching', 'bitchy', 'sonofabitch', 'sonofbitch',
+      'ass', 'asshole', 'asshat', 'dumbass', 'smartass', 'jackass', 'badass',
+      'damn', 'dammit', 'goddamn', 'goddammit',
+      'hell', 'hellno',
+      'crap', 'crappy',
+      'piss', 'pissing', 'pissed', 'pissedoff',
+      'dick', 'dickhead', 'cock', 'cockhead', 'prick',
+      'pussy', 'cunt', 'twat',
+      'whore', 'ho', 'hoe', 'slut', 'slutty',
+      'bastard', 'bastards',
+      'wtf', 'stfu', 'gtfo', 'lmfao', 'fml',
+      // Hinglish profanity
+      'bhosdi', 'bhosdike', 'bhosdika', 'bhosdiwala',
+      'madarchod', 'madarchod', 'madarchoot',
+      'behenchod', 'behenchoot', 'behenchod',
+      'gaand', 'gaandu', 'gaandfat', 'gaandmasti',
+      'lund', 'lunda', 'lundebaaz', 'lundtopi',
+      'chut', 'chutia', 'chutiya', 'chutyapa',
+      'lavde', 'lavda', 'lavdeke',
+      'suar', 'suarke', 'suarkebachche',
+      'kamine', 'kamina', 'kamini',
+      'harami', 'haramzada', 'haramzadi',
+      'randi', 'randibaaz', 'randikaput',
+      'chinal', 'chinali',
+      'bhadwa', 'bhadwi',
+      'gaandfaad', 'gaand maar', 'gaandmaro',
+      'lundkhus', 'lundchoos',
+      'chutmarani', 'chutkebaal',
+      'bhenke', 'bhenke', 'bhenkelund',
+      'madarke', 'madarke', 'madarkebachche',
+      // Variations with spaces/special chars
+      'f u c k', 'f u c k i n g',
+      's h i t', 'b i t c h',
+      'm f', 'mf', 'mtherfcker',
+      'bhenchod', 'behenchod', 'bhen choot',
+      'madar chod', 'madar choot',
+      'bhosdi ke', 'bhosdi ka',
+      'gaand mein', 'gaand me',
+      'lund ke', 'lund ka',
+      'chut ke', 'chut ka'
     ]
   };
 
@@ -1178,18 +1223,11 @@ form.addEventListener("submit", async function (event) {
   const description = document.getElementById("description").value;
   const place = document.getElementById("place").value;
 
-  console.log("Debug - Form values:", { name, title, description, place });
-  console.log("Debug - Library loaded:", !!BANNED_WORDS_LIBRARY);
-  
   const violations = [];
   
   function checkField(value, fieldName) {
-    console.log(`Debug - Checking ${fieldName}:`, value);
-    const hasBanned = BANNED_WORDS_LIBRARY.containsBannedWords(value);
-    console.log(`Debug - ${fieldName} has banned:`, hasBanned);
-    if (hasBanned) {
+    if (BANNED_WORDS_LIBRARY.containsBannedWords(value)) {
       const found = BANNED_WORDS_LIBRARY.getBannedWordsFound(value);
-      console.log(`Debug - ${fieldName} found words:`, found);
       violations.push(`${fieldName}: ${found.join(', ')}`);
     }
   }
@@ -1198,8 +1236,6 @@ form.addEventListener("submit", async function (event) {
   checkField(title, "Title");
   checkField(description, "Description");
   checkField(place, "Place");
-
-  console.log("Debug - Violations:", violations);
 
   if (violations.length > 0) {
     toast("Inappropriate content detected: " + violations.join("; "), "error");
