@@ -71,31 +71,23 @@ const BANNED_WORDS_LIBRARY = (function() {
   }
 
   function generateLeetVariations(word) {
-    const variations = new Set([word]);
-    const chars = word.split('');
+    const variations = new Set([word.toLowerCase()]);
+    const chars = word.toLowerCase().split('');
     
-    function generateVariations(index, current) {
-      if (index === chars.length) {
-        variations.add(current.join(''));
-        return;
-      }
-      
-      const char = chars[index].toLowerCase();
+    // Only do single-character substitutions to avoid explosion
+    for (let i = 0; i < chars.length; i++) {
+      const char = chars[i];
       const leetOptions = LEET_MAP[char] || [];
       
-      current.push(chars[index]);
-      generateVariations(index + 1, current);
-      current.pop();
-      
       for (const leet of leetOptions) {
-        current.push(leet);
-        generateVariations(index + 1, current);
-        current.pop();
+        const variation = [...chars];
+        variation[i] = leet;
+        variations.add(variation.join(''));
       }
     }
     
-    generateVariations(0, []);
-    return Array.from(variations);
+    // Limit total variations per word
+    return Array.from(variations).slice(0, 20);
   }
 
   function generateAllVariations(words) {
