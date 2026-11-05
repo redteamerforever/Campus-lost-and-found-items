@@ -1303,6 +1303,7 @@ form.addEventListener("submit", async function (event) {
           console.log("Before merge:", items[index]);
           items[index] = { ...items[index], ...updatedData };
           console.log("After merge:", items[index]);
+          render(); // Refresh UI with updated data
         } else {
           console.log("Item not found in local array!");
         }
