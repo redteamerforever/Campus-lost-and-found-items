@@ -1286,13 +1286,23 @@ form.addEventListener("submit", async function (event) {
       if (result.error) throw result.error;
       
       // Use returned updated data immediately
+      console.log("Before merge - items length:", items.length);
+      console.log("Looking for editId:", editId);
       if (result.data && result.data.length > 0) {
         const updatedItem = result.data[0];
+        console.log("Updated item from DB:", updatedItem);
         // Update local items array directly for instant UI refresh
         const index = items.findIndex(item => item.id === editId);
+        console.log("Found index:", index);
         if (index !== -1) {
+          console.log("Before merge:", items[index]);
           items[index] = { ...items[index], ...updatedItem };
+          console.log("After merge:", items[index]);
+        } else {
+          console.log("Item not found in local array!");
         }
+      } else {
+        console.log("No data returned from update!");
       }
     } else {
       // New post
