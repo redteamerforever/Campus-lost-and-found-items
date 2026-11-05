@@ -1484,5 +1484,4 @@ start();
     root.style.setProperty("--glow-on", "1");
   });
   } catch (e) {}
-})();CREATE POLICY "Users can delete own posts" ON items
-  FOR DELETE USING (auth.uid() = owner_id);
+})();
