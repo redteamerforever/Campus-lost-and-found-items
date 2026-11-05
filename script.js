@@ -1173,18 +1173,27 @@ form.addEventListener("submit", async function (event) {
   }
 
   // Validate inputs for banned words
-  try {
-    const name = document.getElementById("name").value;
-    const title = document.getElementById("title").value;
-    const description = document.getElementById("description").value;
-    const place = document.getElementById("place").value;
+  const name = document.getElementById("name").value;
+  const title = document.getElementById("title").value;
+  const description = document.getElementById("description").value;
+  const place = document.getElementById("place").value;
 
-    validateInput(name, "Name");
-    validateInput(title, "Title");
-    validateInput(description, "Description");
-    validateInput(place, "Place");
-  } catch (err) {
-    toast(err.message, "error");
+  const violations = [];
+  
+  function checkField(value, fieldName) {
+    if (BANNED_WORDS_LIBRARY.containsBannedWords(value)) {
+      const found = BANNED_WORDS_LIBRARY.getBannedWordsFound(value);
+      violations.push(`${fieldName}: ${found.join(', ')}`);
+    }
+  }
+
+  checkField(name, "Name");
+  checkField(title, "Title");
+  checkField(description, "Description");
+  checkField(place, "Place");
+
+  if (violations.length > 0) {
+    toast("Inappropriate content detected: " + violations.join("; "), "error");
     return;
   }
 
