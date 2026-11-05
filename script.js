@@ -1310,9 +1310,15 @@ form.addEventListener("submit", async function (event) {
         owner_id: currentUserId
       });
       if (result.error) throw result.error;
+      
+      // For new posts, reload to get the new item with DB-generated fields
+      await loadItems();
     }
 
-    await loadItems();
+    // For edits, local merge already updated UI - skip reload to avoid stale data
+    if (!editId) {
+      // already loaded above for new posts
+    }
 
     // reset and close the form
     form.reset();
