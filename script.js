@@ -1,268 +1,70 @@
 // ===== 1. SUPABASE SETUP =====
-// Replace these with your actual Supabase project URL and anon public key.
-// Never commit secret/service_role keys here.
+// Only the publishable (anon) key belongs here. Never put a service_role key in frontend code.
 const SUPABASE_URL = "https://acqqbhaoukjarnijhgte.supabase.co";
 const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
 
-// Load enhanced banned words library
-// Handles case variations, leetspeak (@, 3, 1, 0), special chars, and Hinglish terms
-const BANNED_WORDS_LIBRARY = (function() {
-  const LEET_MAP = {
-    'a': ['@', '4', 'α', 'д'],
-    'b': ['8', 'ß', 'в', '6'],
-    'c': ['(', '<', '¢', 'с'],
-    'd': ['|)', 'ð', 'д'],
-    'e': ['3', '€', 'е'],
-    'f': ['ƒ', 'Ғ'],
-    'g': ['9', '6', 'ԍ', 'ɡ'],
-    'h': ['#', 'н', 'ħ'],
-    'i': ['1', '!', '|', 'í', 'і'],
-    'j': ['_|', 'ј'],
-    'k': ['|<', 'к'],
-    'l': ['1', '|', '£', 'ⅼ'],
-    'm': ['м', 'ɱ'],
-    'n': ['п', 'η'],
-    'o': ['0', 'ø', 'о', 'σ'],
-    'p': ['р', 'ƿ'],
-    'q': ['9', 'ԛ'],
-    'r': ['®', 'г'],
-    's': ['$', '5', 'ѕ', 'š'],
-    't': ['7', '†', 'т'],
-    'u': ['μ', 'ц', 'υ'],
-    'v': ['ν', 'ѵ'],
-    'w': ['ω', 'щ', 'ш'],
-    'x': ['×', 'х', 'χ'],
-    'y': ['¥', 'у', 'γ'],
-    'z': ['2', 'з', 'ζ']
-  };
-
-  function normalizeText(text) {
-    return text
-      .toLowerCase()
-      .replace(/[@4αд]/g, 'a')
-      .replace(/[8ßв6]/g, 'b')
-      .replace(/[\(<¢с]/g, 'c')
-      .replace(/[\)]ðд]/g, 'd')
-      .replace(/[3€е]/g, 'e')
-      .replace(/[ƒҒ]/g, 'f')
-      .replace(/[96ԍɡ]/g, 'g')
-      .replace(/[#нħ]/g, 'h')
-      .replace(/[1!|íі]/g, 'i')
-      .replace(/[_|ј]/g, 'j')
-      .replace(/[|<к]/g, 'k')
-      .replace(/[1|£ⅼ]/g, 'l')
-      .replace(/[мɱ]/g, 'm')
-      .replace(/[пη]/g, 'n')
-      .replace(/[0øоσ]/g, 'o')
-      .replace(/[рƿ]/g, 'p')
-      .replace(/[9ԛ]/g, 'q')
-      .replace(/[®г]/g, 'r')
-      .replace(/[$5ѕš]/g, 's')
-      .replace(/[7†т]/g, 't')
-      .replace(/[μцυ]/g, 'u')
-      .replace(/[νѵ]/g, 'v')
-      .replace(/[ωщш]/g, 'w')
-      .replace(/[×хχ]/g, 'x')
-      .replace(/[¥уγ]/g, 'y')
-      .replace(/[2зζ]/g, 'z')
-      .replace(/[^\w\s]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  function generateLeetVariations(word) {
-    const variations = new Set([word.toLowerCase()]);
-    const chars = word.toLowerCase().split('');
-    
-    // Only do single-character substitutions to avoid explosion
-    for (let i = 0; i < chars.length; i++) {
-      const char = chars[i];
-      const leetOptions = LEET_MAP[char] || [];
-      
-      for (const leet of leetOptions) {
-        const variation = [...chars];
-        variation[i] = leet;
-        variations.add(variation.join(''));
-      }
-    }
-    
-    // Limit total variations per word
-    return Array.from(variations).slice(0, 20);
-  }
-
-  function generateAllVariations(words) {
-    const variations = new Set();
-    
-    for (const word of words) {
-      variations.add(word.toLowerCase());
-      variations.add(word.toUpperCase());
-      variations.add(word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
-      
-      const leetVariations = generateLeetVariations(word);
-      for (const variation of leetVariations.slice(0, 50)) {
-        variations.add(variation.toLowerCase());
-      }
-    }
-    
-    return Array.from(variations);
-  }
-
-  const BANNED_WORDS = {
-    underwear: [
-      'underwear', 'undies', 'panties', 'briefs', 'boxers', 'boxer-briefs', 'thong', 'g-string',
-      'bikini', 'hipster', 'boyshorts', 'high-waist', 'control-top', 'shapewear', 'lingerie',
-      'bra', 'brassiere', 'sports-bra', 'push-up', 'strapless', 'bralette', 'camisole', 'tank-top',
-      'undershirt', 'vest', 'singlet', 'long-johns', 'thermal-underwear', 'union-suit', 'onesie',
-      'chaddi', 'chaddhi', 'kaccha', 'kacchha', 'langot', 'langoot', 'undergarment', 'undergarments',
-      'peticoat', 'petticoat', 'blouse', 'brah', 'brassier', 'choli', 'lehenga', 'ghagra'
-    ],
-    explicit: [
-      'nude', 'naked', 'bare', 'exposed', 'revealing', 'see-through', 'sheer', 'transparent',
-      'lace', 'silk', 'satin', 'velvet', 'mesh', 'fishnet', 'cut-out', 'open-crotch', 'crotchless',
-      'erotic', 'sexual', 'sexy', 'seductive', 'provocative', 'intimate', 'private', 'personal',
-      'boudoir', 'bedroom', 'nightwear', 'sleepwear', 'pajamas', 'nightgown', 'negligee', 'peignoir',
-      'nanga', 'nange', 'nangi', 'bezaar', 'bezaari', 'ashleel', 'ashleelta', 'ganda', 'gandi',
-      'besharam', 'besharmi', 'badmash', 'badmaash', 'aashique', 'aashiq', 'rangreli', 'rangraliya'
-    ],
-    bodyParts: [
-      'breast', 'breasts', 'boob', 'boobs', 'nipple', 'nipples', 'areola', 'cleavage',
-      'butt', 'buttocks', 'bottom', 'rear', 'behind', 'cheeks', 'glutes',
-      'groin', 'crotch', 'genital', 'genitals', 'pubic', 'private-parts', 'intimate-area',
-      'stan', 'stann', 'chuch', 'chuchi', 'chuchiyan', 'nipal', 'nipple', 'gaand', 'gand',
-      'bum', 'bumm', 'peechwada', 'pichwada', 'kamar', 'jaangh', 'jagh', 'private', 'privates',
-      'gupt', 'guptang', 'ling', 'yoni', 'shishn', 'shishan'
-    ],
-    actions: [
-      'flash', 'expose', 'show', 'reveal', 'display', 'model', 'pose', 'strip', 'undress',
-      'remove', 'take-off', 'peel-off', 'slip-off', 'adjust', 'fix', 'arrange', 'position',
-      'dikha', 'dikhao', 'dikhana', 'utaro', 'utarna', 'nikal', 'nikalo', 'nikalna',
-      'khol', 'kholo', 'kholna', 'ulaat', 'ulta', 'ultaana', 'pehen', 'pehno', 'pehanna'
-    ],
-    contexts: [
-      'fetish', 'kink', 'bdsm', 'roleplay', 'fantasy', 'desire', 'lust', 'arousal',
-      'exhibitionist', 'voyeur', 'peep', 'spy', 'watch', 'stare', 'gaze', 'ogle',
-      'pervert', 'creep', 'weirdo', 'freak', 'deviant', 'obsessed', 'addicted',
-      'kaam', 'kaamuk', 'kaamini', 'vasna', 'vasana', 'ichha', 'ichcha', 'tarse', 'tarsao',
-      'majboor', 'majboori', 'dabao', 'dabaao', 'zor', 'zabardasti', 'balatkar', 'balatkaar',
-      'chhed', 'chhedna', 'chhuo', 'chhuna', 'maslo', 'masalna', 'dabao', 'dabana'
-    ],
-    profanity: [
-      // English profanity
-      'fuck', 'fucking', 'fucker', 'motherfucker', 'motherfucking',
-      'shit', 'shitting', 'shitty', 'bullshit', 'bullshitting',
-      'bitch', 'bitching', 'bitchy', 'sonofabitch', 'sonofbitch',
-      'ass', 'asshole', 'asshat', 'dumbass', 'smartass', 'jackass', 'badass',
-      'damn', 'dammit', 'goddamn', 'goddammit',
-      'hell', 'hellno',
-      'crap', 'crappy',
-      'piss', 'pissing', 'pissed', 'pissedoff',
-      'dick', 'dickhead', 'cock', 'cockhead', 'prick',
-      'pussy', 'cunt', 'twat',
-      'whore', 'ho', 'hoe', 'slut', 'slutty',
-      'bastard', 'bastards',
-      'wtf', 'stfu', 'gtfo', 'lmfao', 'fml',
-      // Hinglish profanity
-      'bhosdi', 'bhosdike', 'bhosdika', 'bhosdiwala',
-      'madarchod', 'madarchod', 'madarchoot',
-      'behenchod', 'behenchoot', 'behenchod',
-      'gaand', 'gaandu', 'gaandfat', 'gaandmasti',
-      'lund', 'lunda', 'lundebaaz', 'lundtopi',
-      'chut', 'chutia', 'chutiya', 'chutyapa',
-      'lavde', 'lavda', 'lavdeke',
-      'suar', 'suarke', 'suarkebachche',
-      'kamine', 'kamina', 'kamini',
-      'harami', 'haramzada', 'haramzadi',
-      'randi', 'randibaaz', 'randikaput',
-      'chinal', 'chinali',
-      'bhadwa', 'bhadwi',
-      'gaandfaad', 'gaand maar', 'gaandmaro',
-      'lundkhus', 'lundchoos',
-      'chutmarani', 'chutkebaal',
-      'bhenke', 'bhenke', 'bhenkelund',
-      'madarke', 'madarke', 'madarkebachche',
-      // Variations with spaces/special chars
-      'f u c k', 'f u c k i n g',
-      's h i t', 'b i t c h',
-      'm f', 'mf', 'mtherfcker',
-      'bhenchod', 'behenchod', 'bhen choot',
-      'madar chod', 'madar choot',
-      'bhosdi ke', 'bhosdi ka',
-      'gaand mein', 'gaand me',
-      'lund ke', 'lund ka',
-      'chut ke', 'chut ka'
-    ]
-  };
-
-  const ALL_BANNED_VARIATIONS = [];
-  Object.values(BANNED_WORDS).forEach(categoryWords => {
-    ALL_BANNED_VARIATIONS.push(...generateAllVariations(categoryWords));
-  });
-
-  function containsBannedWords(text) {
-    if (!text || typeof text !== 'string') return false;
-    const normalizedText = normalizeText(text);
-    for (const bannedWord of ALL_BANNED_VARIATIONS) {
-      const normalizedBanned = normalizeText(bannedWord);
-      if (normalizedText.includes(normalizedBanned)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function filterBannedWords(text, replacement = '***') {
-    if (!text || typeof text !== 'string') return text;
-    let filteredText = text;
-    const normalizedText = normalizeText(text);
-    for (const bannedWord of ALL_BANNED_VARIATIONS) {
-      const normalizedBanned = normalizeText(bannedWord);
-      if (normalizedText.includes(normalizedBanned)) {
-        const regex = new RegExp(bannedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-        filteredText = filteredText.replace(regex, replacement);
-      }
-    }
-    return filteredText;
-  }
-
-  function getBannedWordsFound(text) {
-    if (!text || typeof text !== 'string') return [];
-    const found = [];
-    const normalizedText = normalizeText(text);
-    for (const bannedWord of ALL_BANNED_VARIATIONS) {
-      const normalizedBanned = normalizeText(bannedWord);
-      if (normalizedText.includes(normalizedBanned)) {
-        found.push(bannedWord);
-      }
-    }
-    return [...new Set(found)];
-  }
-
-  return {
-    BANNED_WORDS,
-    ALL_BANNED_VARIATIONS,
-    containsBannedWords,
-    filterBannedWords,
-    getBannedWordsFound,
-    normalizeText,
-    generateLeetVariations
-  };
-})();
-
 const { createClient } = supabase;
+// FIX: the old `global.headers` block (with Authorization: Bearer <anon key>) was removed.
+// It overrode the logged-in user's token, so auth.uid() was always null and RLS blocked updates.
 const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false
-  },
-  global: {
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Prefer': 'return=representation'
-    }
   }
 });
+
+// ===== 1b. BANNED WORDS (whole-word matching, so "phone", "library", "class" are safe) =====
+const BANNED_WORDS_LIBRARY = (function () {
+  const WORDS = [
+    // English profanity
+    "fuck", "fucking", "fucker", "motherfucker", "shit", "bullshit", "bitch", "asshole",
+    "dumbass", "dick", "dickhead", "cock", "pussy", "cunt", "twat", "whore", "slut",
+    "bastard", "stfu", "gtfo",
+    // Hinglish profanity
+    "bhosdi", "bhosdike", "bhosdika", "madarchod", "madarchoot", "behenchod", "bhenchod",
+    "behenchoot", "gaandu", "gaand", "lund", "chut", "chutia", "chutiya", "lavde", "lavda",
+    "harami", "haramzada", "randi", "bhadwa", "bhadwi", "kamina", "kamine",
+    // Explicit / intimate items
+    "nude", "naked", "nipple", "nipples", "boob", "boobs", "breast", "breasts",
+    "underwear", "undies", "panties", "panty", "bra", "lingerie", "thong", "chaddi", "kaccha", "langot"
+  ];
+
+  const LEET = { "@": "a", "$": "s", "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "!": "i" };
+
+  function normalize(text) {
+    return String(text || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[@$013457!]/g, function (c) { return LEET[c]; });
+  }
+
+  function escapeRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // one regex per word, matching only whole words
+  const patterns = WORDS.map(function (word) {
+    return { word: word, re: new RegExp("(^|[^a-z0-9])" + escapeRegex(word) + "($|[^a-z0-9])", "i") };
+  });
+
+  function getBannedWordsFound(text) {
+    if (!text || typeof text !== "string") return [];
+    const versions = [text.toLowerCase(), normalize(text)];
+    const found = new Set();
+    patterns.forEach(function (p) {
+      if (versions.some(function (v) { return p.re.test(v); })) found.add(p.word);
+    });
+    return Array.from(found);
+  }
+
+  function containsBannedWords(text) {
+    return getBannedWordsFound(text).length > 0;
+  }
+
+  return { containsBannedWords: containsBannedWords, getBannedWordsFound: getBannedWordsFound };
+})();
 
 // ===== 2. CATEGORIES =====
 const CATEGORIES = {
@@ -303,6 +105,8 @@ const pinBtn = document.getElementById("pinBtn");
 const locationStatus = document.getElementById("locationStatus");
 const mapBox = document.getElementById("mapBox");
 
+const POST_BUTTON_TEXT = "➕ Post an item";
+
 let items = [];            // posts loaded from Supabase
 let lastList = [];         // posts currently shown (after filters)
 let currentUserId = null;  // this browser's anonymous user id
@@ -318,7 +122,7 @@ let viewMode = "list";     // list | map
 let refitNext = false;     // zoom the big map to fit the posts
 let firstRender = true;    // play the entrance animation only once
 
-// fill the two category drop-downs (cleared first, so nothing doubles or goes missing)
+// fill the two category drop-downs
 categorySelect.innerHTML = "";
 categoryFilter.innerHTML = "";
 categoryFilter.append(new Option("All categories", "all"));
@@ -328,29 +132,8 @@ Object.keys(CATEGORIES).forEach(function (key) {
 });
 categoryFilter.value = "all";
 
-function escapeHtml(text) {
-  if (!text) return "";
-  const div = document.createElement("div");
-  div.textContent = String(text);
-  return div.innerHTML;
-}
-
 function sanitizeInput(text) {
   return String(text || "").trim().slice(0, 500);
-}
-
-// Validate input for banned words
-function validateInput(text, fieldName) {
-  if (BANNED_WORDS_LIBRARY.containsBannedWords(text)) {
-    const foundWords = BANNED_WORDS_LIBRARY.getBannedWordsFound(text);
-    throw new Error(`${fieldName} contains inappropriate content: ${foundWords.join(', ')}`);
-  }
-  return true;
-}
-
-// Filter banned words from input
-function filterInput(text) {
-  return BANNED_WORDS_LIBRARY.filterBannedWords(text, '[FILTERED]');
 }
 
 // ===== 4. SMALL HELPERS =====
@@ -375,12 +158,8 @@ function timeAgo(iso) {
 
 function formatDateTime(iso) {
   return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true
+    day: "numeric", month: "short", year: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true
   });
 }
 
@@ -423,30 +202,38 @@ function animateCount(el, target) {
   }, 30);
 }
 
-// ===== 5. DARK MODE =====
-function applyTheme(dark) {
-  document.body.classList.toggle("dark", true);
-  document.body.classList.remove("light");
-  if (themeBtn) themeBtn.textContent = "🌙";
-}
-
-let savedTheme = null;
-try {
-  savedTheme = localStorage.getItem("theme");
-} catch (e) {}
-applyTheme(true);
-
-// Theme always dark, button kept for visual consistency
-if (themeBtn) themeBtn.addEventListener("click", function () {
+// ===== 5. DARK MODE (always dark) =====
+function applyTheme() {
   document.body.classList.add("dark");
   document.body.classList.remove("light");
   if (themeBtn) themeBtn.textContent = "🌙";
-});
+}
+applyTheme();
+if (themeBtn) themeBtn.addEventListener("click", applyTheme);
 
-// open / close the post form
+// ===== 5a. OPEN / CLOSE THE FORM =====
+// Resets the form completely, clears edit mode, and restores the button text.
+function closeForm() {
+  form.reset();
+  delete form.dataset.editId;
+  selectedFile = null;
+  pickedLocation = null;
+  photoStatus.textContent = "";
+  locationStatus.textContent = "";
+  if (map) resetMap();
+  form.hidden = true;
+  openPostBtn.textContent = POST_BUTTON_TEXT;
+  postBtn.textContent = "Post";
+}
+
 openPostBtn.addEventListener("click", function () {
-  form.hidden = !form.hidden;
-  if (!form.hidden) form.scrollIntoView({ behavior: "smooth" });
+  if (!form.hidden) {
+    // form is open (new post or edit): close and cancel
+    closeForm();
+    return;
+  }
+  form.hidden = false;
+  form.scrollIntoView({ behavior: "smooth" });
 });
 
 // ===== 5b. CHANGE THE "WHERE?" HINT FOR LOST / FOUND =====
@@ -465,9 +252,7 @@ form.addEventListener("reset", function () {
 });
 updatePlaceHint();
 
-// ===== 6. SIGN IN (anonymous, automatic, nothing to see) =====
-// Only one sign-in can run at a time, so we never create two different
-// anonymous users by accident (that would split your posts between them).
+// ===== 6. SIGN IN (anonymous, automatic) =====
 async function ensureSignedIn() {
   if (signInPromise) return signInPromise;
 
@@ -491,8 +276,6 @@ async function ensureSignedIn() {
   }
 }
 
-// Keep currentUserId equal to the user that is REALLY signed in, and redraw
-// the cards so the Delete / Solved buttons match.
 db.auth.onAuthStateChange(function (event, session) {
   const newId = session && session.user ? session.user.id : null;
   if (newId && newId !== currentUserId) {
@@ -513,7 +296,7 @@ async function loadItems() {
   render();
 }
 
-// ===== 8. SHRINK A PHOTO (returns a small JPEG file) =====
+// ===== 8. SHRINK A PHOTO (returns a small JPEG blob) =====
 function shrinkImage(file) {
   return new Promise(function (resolve, reject) {
     const reader = new FileReader();
@@ -574,10 +357,7 @@ function createMapIfNeeded() {
 
     const satellite = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
-        maxZoom: 19,
-        attribution: "Tiles © Esri, Maxar, Earthstar Geographics"
-      }
+      { maxZoom: 19, attribution: "Tiles © Esri, Maxar, Earthstar Geographics" }
     );
 
     const terrain = L.tileLayer("https://tile.opentopomap.org/{z}/{x}/{y}.png", {
@@ -587,11 +367,7 @@ function createMapIfNeeded() {
 
     street.addTo(map);
 
-    L.control.layers({
-      "Street": street,
-      "Satellite": satellite,
-      "Terrain": terrain
-    }).addTo(map);
+    L.control.layers({ "Street": street, "Satellite": satellite, "Terrain": terrain }).addTo(map);
 
     map.on("click", function (e) {
       removeAccuracyCircle();
@@ -695,7 +471,6 @@ if (mapCloseBtn) {
 }
 
 // ===== 11. WHATSAPP, SHARE, PHOTO VIEWER =====
-// Turns what the user typed into digits only, with country code.
 // A 10-digit number is treated as an Indian number (+91).
 function cleanWhatsApp(raw) {
   let digits = raw.replace(/\D/g, "");
@@ -705,7 +480,6 @@ function cleanWhatsApp(raw) {
   return digits;
 }
 
-// Link that opens WhatsApp with a ready-made message
 function whatsappLink(item) {
   const text = item.type === "lost"
     ? 'Hi, I saw your LOST post "' + item.title + '" on Campus Lost & Found. I think I may have found it.'
@@ -739,15 +513,23 @@ function openLightbox(src) {
   document.body.append(overlay);
 }
 
-// ===== 12. DELETE, MARK AS SOLVED, CONFETTI =====
+// ===== 12. DELETE, MARK AS SOLVED, EDIT, CONFETTI =====
 async function deleteItem(id) {
-  const sure = confirm("Delete this post? This cannot be undone.");
-  if (!sure) return;
+  if (!confirm("Delete this post? This cannot be undone.")) return;
 
-  const { error } = await db.from("items").delete().eq("id", id);
+  const { data: rows, error } = await db
+    .from("items")
+    .delete()
+    .eq("id", id)
+    .eq("owner_id", currentUserId)
+    .select();
 
   if (error) {
     toast("Could not delete: " + error.message, "error");
+    return;
+  }
+  if (!rows || rows.length === 0) {
+    toast("Delete was blocked (no rows changed). Check RLS policies / login.", "error");
     return;
   }
 
@@ -758,13 +540,19 @@ async function deleteItem(id) {
 async function setSolved(id, solved) {
   if (!confirm(solved ? "Mark this case as solved?" : "Reopen this case?")) return;
 
-  const { error } = await db
+  const { data: rows, error } = await db
     .from("items")
     .update({ status: solved ? "solved" : "open" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("owner_id", currentUserId)
+    .select();
 
   if (error) {
     toast("Could not update: " + error.message, "error");
+    return;
+  }
+  if (!rows || rows.length === 0) {
+    toast("Update was blocked (no rows changed). Check RLS policies / login.", "error");
     return;
   }
 
@@ -776,24 +564,37 @@ async function setSolved(id, solved) {
 }
 
 function editItem(item) {
-  // Pre-fill the form with existing post data
+  // clear leftovers from any previous pin
+  if (map) resetMap();
+
   document.getElementById("type").value = item.type || "lost";
+  updatePlaceHint();
   categorySelect.value = item.category || "other";
-  document.getElementById("name").value = filterInput(item.name || "");
-  document.getElementById("title").value = filterInput(item.title || "");
-  document.getElementById("description").value = filterInput(item.description || "");
-  document.getElementById("place").value = filterInput(item.place || "");
-  document.getElementById("whatsapp").value = item.whatsapp ? (item.whatsapp.startsWith("91") ? item.whatsapp.slice(2) : item.whatsapp) : "";
+  document.getElementById("name").value = item.name || "";
+  document.getElementById("title").value = item.title || "";
+  document.getElementById("description").value = item.description || "";
+  document.getElementById("place").value = item.place || "";
+  document.getElementById("whatsapp").value = item.whatsapp
+    ? (item.whatsapp.startsWith("91") ? item.whatsapp.slice(2) : item.whatsapp)
+    : "";
+
   selectedFile = null;
   pickedLocation = item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null;
   photoStatus.textContent = item.image_url ? "Existing photo will be kept unless replaced" : "";
   locationStatus.textContent = pickedLocation ? "Previous location kept" : "";
 
+  // show the existing pin on the map so it can be moved
+  if (pickedLocation) {
+    createMapIfNeeded();
+    setPin(pickedLocation.lat, pickedLocation.lng);
+    map.setView([pickedLocation.lat, pickedLocation.lng], 17);
+  }
+
   form.hidden = false;
   form.scrollIntoView({ behavior: "smooth" });
   openPostBtn.textContent = "Cancel edit";
+  postBtn.textContent = "Save edit";
 
-  // Store the item id being edited
   form.dataset.editId = item.id;
 }
 
@@ -1066,7 +867,6 @@ function render() {
 
     card.append(tag, catChip);
 
-    // small label so you can spot your own posts
     if (isOwner) {
       const ownChip = document.createElement("span");
       ownChip.className = "own-chip";
@@ -1107,7 +907,6 @@ function render() {
 
     card.append(nameLine, placeLine, timeLine);
 
-    // when the case was resolved, and how long it took
     if (solved && item.solved_at) {
       const resolvedLine = document.createElement("p");
       resolvedLine.className = "resolved-line";
@@ -1157,7 +956,6 @@ function render() {
     card.append(actions);
 
     // WhatsApp button: only for OTHER people, on open cases
-    // (you should not message yourself on your own post)
     if (!solved && !isOwner) {
       const waBtn = document.createElement("a");
       waBtn.className = "wa-btn";
@@ -1217,38 +1015,29 @@ form.addEventListener("submit", async function (event) {
     return;
   }
 
-  // Validate inputs for banned words
-  const name = document.getElementById("name").value;
-  const title = document.getElementById("title").value;
-  const description = document.getElementById("description").value;
-  const place = document.getElementById("place").value;
-
+  // check the text fields for banned words
+  const fields = {
+    Name: document.getElementById("name").value,
+    Title: document.getElementById("title").value,
+    Description: document.getElementById("description").value,
+    Place: document.getElementById("place").value
+  };
   const violations = [];
-  
-  function checkField(value, fieldName) {
-    if (BANNED_WORDS_LIBRARY.containsBannedWords(value)) {
-      const found = BANNED_WORDS_LIBRARY.getBannedWordsFound(value);
-      violations.push(`${fieldName}: ${found.join(', ')}`);
-    }
-  }
-
-  checkField(name, "Name");
-  checkField(title, "Title");
-  checkField(description, "Description");
-  checkField(place, "Place");
-
+  Object.keys(fields).forEach(function (label) {
+    const found = BANNED_WORDS_LIBRARY.getBannedWordsFound(fields[label]);
+    if (found.length) violations.push(label + ": " + found.join(", "));
+  });
   if (violations.length > 0) {
     toast("Inappropriate content detected: " + violations.join("; "), "error");
     return;
   }
 
-  postBtn.disabled = true;
   const editId = form.dataset.editId;
+  postBtn.disabled = true;
   postBtn.textContent = editId ? "Saving..." : "Posting...";
 
   try {
     await ensureSignedIn();
-    const editId = form.dataset.editId;
 
     // upload the photo (if any) to Supabase Storage, inside your own folder
     let imageUrl = null;
@@ -1264,100 +1053,56 @@ form.addEventListener("submit", async function (event) {
       imageUrl = db.storage.from("item-photos").getPublicUrl(path).data.publicUrl;
     }
 
-    let result;
-    if (editId) {
-      // Editing existing post
-      const updates = {
-        type: sanitizeInput(document.getElementById("type").value),
-        category: sanitizeInput(categorySelect.value),
-        name: filterInput(sanitizeInput(document.getElementById("name").value)),
-        title: filterInput(sanitizeInput(document.getElementById("title").value)),
-        place: filterInput(sanitizeInput(document.getElementById("place").value)),
-        description: filterInput(sanitizeInput(document.getElementById("description").value)),
-        whatsapp: whatsapp,
-        lat: pickedLocation ? pickedLocation.lat : null,
-        lng: pickedLocation ? pickedLocation.lng : null
-      };
-      if (imageUrl !== null) updates.image_url = imageUrl;
-      else if (selectedFile === null && form.querySelector('input[name="clear_photo"]')) updates.image_url = null;
+    const fieldsToSave = {
+      type: sanitizeInput(document.getElementById("type").value),
+      category: sanitizeInput(categorySelect.value),
+      name: sanitizeInput(fields.Name),
+      title: sanitizeInput(fields.Title),
+      place: sanitizeInput(fields.Place),
+      description: sanitizeInput(fields.Description),
+      whatsapp: whatsapp,
+      lat: pickedLocation ? pickedLocation.lat : null,
+      lng: pickedLocation ? pickedLocation.lng : null
+    };
 
-      result = await db.from("items").update(updates).eq("id", editId).eq("owner_id", currentUserId);
-      console.log("Edit result:", result, "currentUserId:", currentUserId, "editId:", editId);
-      if (result.error) throw result.error;
-      
-      // Fetch updated item since .select() may not return data due to RLS
-      const { data: updatedData, error: fetchError } = await db
+    if (editId) {
+      // keep the old photo unless a new one was chosen
+      if (imageUrl !== null) fieldsToSave.image_url = imageUrl;
+
+      const { data: rows, error } = await db
         .from("items")
-        .select("*")
+        .update(fieldsToSave)
         .eq("id", editId)
-        .single();
-      
-      console.log("Fetched updated item:", updatedData, "fetchError:", fetchError);
-      console.log("updatedData type:", typeof updatedData, "is null:", updatedData === null);
-      
-      if (!fetchError && updatedData) {
-        console.log("Before merge - items length:", items.length);
-        console.log("Looking for editId:", editId);
-        const index = items.findIndex(item => item.id === editId);
-        console.log("Found index:", index);
-        if (index !== -1) {
-          console.log("Before merge:", items[index]);
-          items[index] = { ...items[index], ...updatedData };
-          console.log("After merge:", items[index]);
-          render(); // Refresh UI with updated data
-        } else {
-          console.log("Item not found in local array!");
-        }
-      } else {
-        console.log("Could not fetch updated item, reloading...");
-        await loadItems();
+        .eq("owner_id", currentUserId)
+        .select();
+
+      if (error) throw error;
+      // FIX: RLS blocks updates silently (0 rows, no error), so check for it
+      if (!rows || rows.length === 0) {
+        throw new Error("Update was blocked (no rows changed). Check RLS policies / login.");
       }
+
+      items = items.map(function (i) { return i.id === editId ? rows[0] : i; });
+      render();
     } else {
-      // New post
-      result = await db.from("items").insert({
-        type: sanitizeInput(document.getElementById("type").value),
-        category: sanitizeInput(categorySelect.value),
-        name: filterInput(sanitizeInput(document.getElementById("name").value)),
-        title: filterInput(sanitizeInput(document.getElementById("title").value)),
-        place: filterInput(sanitizeInput(document.getElementById("place").value)),
-        description: filterInput(sanitizeInput(document.getElementById("description").value)),
-        whatsapp: whatsapp,
-        image_url: imageUrl,
-        lat: pickedLocation ? pickedLocation.lat : null,
-        lng: pickedLocation ? pickedLocation.lng : null,
-        owner_id: currentUserId
-      });
-      if (result.error) throw result.error;
-      
-      // For new posts, reload to get the new item with DB-generated fields
+      fieldsToSave.image_url = imageUrl;
+      fieldsToSave.owner_id = currentUserId;
+
+      const { error } = await db.from("items").insert(fieldsToSave);
+      if (error) throw error;
+
       await loadItems();
     }
 
-    // For edits, local merge already updated UI - skip reload to avoid stale data
-    if (!editId) {
-      // already loaded above for new posts
-    }
-
-    // reset and close the form
-    form.reset();
-    delete form.dataset.editId;
-    selectedFile = null;
-    pickedLocation = null;
-    photoStatus.textContent = "";
-    locationStatus.textContent = "";
-    if (map) resetMap();
-    form.hidden = true;
-
-    const msg = editId ? "Updated! ✏️" : "Posted! 🎉";
-    toast(msg, "success");
+    closeForm();
+    toast(editId ? "Updated! ✏️" : "Posted! 🎉", "success");
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (err) {
     console.error(err);
-    toast("Could not post: " + (err.message || err), "error");
+    toast("Could not save: " + (err.message || err), "error");
   } finally {
     postBtn.disabled = false;
-    const editId = form.dataset.editId;
-    postBtn.textContent = editId ? "Save edit" : "Post";
+    postBtn.textContent = form.dataset.editId ? "Save edit" : "Post";
   }
 });
 
@@ -1365,10 +1110,8 @@ form.addEventListener("submit", async function (event) {
 async function start() {
   feedStatus.textContent = "Loading posts...";
 
-  // work out who this browser is (needed for the delete / solved buttons)
   try {
     await ensureSignedIn();
-    // handy for testing: open the browser console (F12) to see it
     console.log("[Lost & Found] signed in as", currentUserId);
   } catch (err) {
     console.error(err);
@@ -1394,118 +1137,108 @@ start();
 // ===== 18. CURSOR + TOUCH LIGHT =====
 (function () {
   try {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  const root = document.documentElement;
-  const BOXES = ".card, .stat-card, .post-form";
-  const isTouchDevice = window.matchMedia("(hover: none)").matches;
+    const root = document.documentElement;
+    const BOXES = ".card, .stat-card, .post-form";
+    const isTouchDevice = window.matchMedia("(hover: none)").matches;
 
-  let targetX = window.innerWidth / 2;
-  let targetY = window.innerHeight * 0.25;
-  let x = targetX;
-  let y = targetY;
-  let lastX = targetX;
-  let lastY = targetY;
-  let running = false;
-  let touching = false;
-  let litBox = null;
-  let fadeTimer = null;
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight * 0.25;
+    let x = targetX;
+    let y = targetY;
+    let lastX = targetX;
+    let lastY = targetY;
+    let running = false;
+    let touching = false;
+    let litBox = null;
+    let fadeTimer = null;
 
-  // on phones the light stays hidden until a finger touches the screen
-  if (isTouchDevice) root.style.setProperty("--glow-on", "0");
+    if (isTouchDevice) root.style.setProperty("--glow-on", "0");
 
-  // page glow: glides after the pointer / finger
-  function tick() {
-    x += (targetX - x) * 0.18;
-    y += (targetY - y) * 0.18;
-    root.style.setProperty("--cursor-x", x.toFixed(1) + "px");
-    root.style.setProperty("--cursor-y", y.toFixed(1) + "px");
+    function tick() {
+      x += (targetX - x) * 0.18;
+      y += (targetY - y) * 0.18;
+      root.style.setProperty("--cursor-x", x.toFixed(1) + "px");
+      root.style.setProperty("--cursor-y", y.toFixed(1) + "px");
 
-    if (Math.abs(targetX - x) > 0.5 || Math.abs(targetY - y) > 0.5) {
-      requestAnimationFrame(tick);
-    } else {
-      running = false;
+      if (Math.abs(targetX - x) > 0.5 || Math.abs(targetY - y) > 0.5) {
+        requestAnimationFrame(tick);
+      } else {
+        running = false;
+      }
     }
-  }
 
-  function startTick() {
-    if (running) return;
-    running = true;
-    requestAnimationFrame(tick);
-  }
+    function startTick() {
+      if (running) return;
+      running = true;
+      requestAnimationFrame(tick);
+    }
 
-  // spotlight inside the card / form under the pointer or finger
-  function lightBox(clientX, clientY, el) {
-    const box = el && el.closest ? el.closest(BOXES) : null;
+    function lightBox(clientX, clientY, el) {
+      const box = el && el.closest ? el.closest(BOXES) : null;
 
-    if (litBox && litBox !== box) litBox.classList.remove("lit");
-    litBox = box;
-    if (!box) return;
+      if (litBox && litBox !== box) litBox.classList.remove("lit");
+      litBox = box;
+      if (!box) return;
 
-    const r = box.getBoundingClientRect();
-    box.style.setProperty("--mx", (clientX - r.left) + "px");
-    box.style.setProperty("--my", (clientY - r.top) + "px");
-    if (box) box.classList.add("lit");
-  }
+      const r = box.getBoundingClientRect();
+      box.style.setProperty("--mx", (clientX - r.left) + "px");
+      box.style.setProperty("--my", (clientY - r.top) + "px");
+      box.classList.add("lit");
+    }
 
-  function moveLight(clientX, clientY, el) {
-    targetX = lastX = clientX;
-    targetY = lastY = clientY;
-    clearTimeout(fadeTimer);
-    root.style.setProperty("--glow-on", "1");
-    startTick();
-    lightBox(clientX, clientY, el);
-  }
+    function moveLight(clientX, clientY, el) {
+      targetX = lastX = clientX;
+      targetY = lastY = clientY;
+      clearTimeout(fadeTimer);
+      root.style.setProperty("--glow-on", "1");
+      startTick();
+      lightBox(clientX, clientY, el);
+    }
 
-  // MOUSE and PEN
-  window.addEventListener("pointermove", function (e) {
-    if (e.pointerType === "touch") return;
-    moveLight(e.clientX, e.clientY, e.target);
-  }, { passive: true });
+    window.addEventListener("pointermove", function (e) {
+      if (e.pointerType === "touch") return;
+      moveLight(e.clientX, e.clientY, e.target);
+    }, { passive: true });
 
-  // TOUCH: the light follows the finger, even while scrolling
-  function onTouch(e) {
-    const t = e.touches[0];
-    if (!t) return;
-    touching = true;
-    // for touchmove, e.target stays the first element touched,
-    // so we ask the browser what is under the finger right now
-    moveLight(t.clientX, t.clientY, document.elementFromPoint(t.clientX, t.clientY));
-  }
+    function onTouch(e) {
+      const t = e.touches[0];
+      if (!t) return;
+      touching = true;
+      moveLight(t.clientX, t.clientY, document.elementFromPoint(t.clientX, t.clientY));
+    }
 
-  function onTouchEnd() {
-    touching = false;
-    clearTimeout(fadeTimer);
-    // let the light linger for a moment, then fade it out
-    fadeTimer = setTimeout(function () {
+    function onTouchEnd() {
+      touching = false;
+      clearTimeout(fadeTimer);
+      fadeTimer = setTimeout(function () {
+        root.style.setProperty("--glow-on", "0");
+        if (litBox) litBox.classList.remove("lit");
+        litBox = null;
+      }, 700);
+    }
+
+    window.addEventListener("touchstart", onTouch, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    let scrollQueued = false;
+    window.addEventListener("scroll", function () {
+      if (touching || scrollQueued) return;
+      scrollQueued = true;
+      requestAnimationFrame(function () {
+        scrollQueued = false;
+        lightBox(lastX, lastY, document.elementFromPoint(lastX, lastY));
+      });
+    }, { passive: true });
+
+    document.documentElement.addEventListener("mouseleave", function () {
       root.style.setProperty("--glow-on", "0");
-      if (litBox) litBox.classList.remove("lit");
-      litBox = null;
-    }, 700);
-  }
-
-  window.addEventListener("touchstart", onTouch, { passive: true });
-  window.addEventListener("touchmove", onTouch, { passive: true });
-  window.addEventListener("touchend", onTouchEnd, { passive: true });
-  window.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
-  // mouse users: when you scroll, cards move under a still mouse
-  let scrollQueued = false;
-  window.addEventListener("scroll", function () {
-    if (touching || scrollQueued) return;
-    scrollQueued = true;
-    requestAnimationFrame(function () {
-      scrollQueued = false;
-      lightBox(lastX, lastY, document.elementFromPoint(lastX, lastY));
     });
-  }, { passive: true });
-
-  // mouse users: fade the glow when the mouse leaves the window
-  document.documentElement.addEventListener("mouseleave", function () {
-    root.style.setProperty("--glow-on", "0");
-  });
-  document.documentElement.addEventListener("mouseenter", function () {
-    root.style.setProperty("--glow-on", "1");
-  });
+    document.documentElement.addEventListener("mouseenter", function () {
+      root.style.setProperty("--glow-on", "1");
+    });
   } catch (e) {}
 })();
