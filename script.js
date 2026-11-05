@@ -4,6 +4,213 @@
 const SUPABASE_URL = "https://acqqbhaoukjarnijhgte.supabase.co";
 const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
 
+// Load enhanced banned words library
+// Handles case variations, leetspeak (@, 3, 1, 0), special chars, and Hinglish terms
+const BANNED_WORDS_LIBRARY = (function() {
+  const LEET_MAP = {
+    'a': ['@', '4', 'α', 'д'],
+    'b': ['8', 'ß', 'в', '6'],
+    'c': ['(', '<', '¢', 'с'],
+    'd': ['|)', 'ð', 'д'],
+    'e': ['3', '€', 'е'],
+    'f': ['ƒ', 'Ғ'],
+    'g': ['9', '6', 'ԍ', 'ɡ'],
+    'h': ['#', 'н', 'ħ'],
+    'i': ['1', '!', '|', 'í', 'і'],
+    'j': ['_|', 'ј'],
+    'k': ['|<', 'к'],
+    'l': ['1', '|', '£', 'ⅼ'],
+    'm': ['м', 'ɱ'],
+    'n': ['п', 'η'],
+    'o': ['0', 'ø', 'о', 'σ'],
+    'p': ['р', 'ƿ'],
+    'q': ['9', 'ԛ'],
+    'r': ['®', 'г'],
+    's': ['$', '5', 'ѕ', 'š'],
+    't': ['7', '†', 'т'],
+    'u': ['μ', 'ц', 'υ'],
+    'v': ['ν', 'ѵ'],
+    'w': ['ω', 'щ', 'ш'],
+    'x': ['×', 'х', 'χ'],
+    'y': ['¥', 'у', 'γ'],
+    'z': ['2', 'з', 'ζ']
+  };
+
+  function normalizeText(text) {
+    return text
+      .toLowerCase()
+      .replace(/[@4αд]/g, 'a')
+      .replace(/[8ßв6]/g, 'b')
+      .replace(/[\(<¢с]/g, 'c')
+      .replace(/[\)]ðд]/g, 'd')
+      .replace(/[3€е]/g, 'e')
+      .replace(/[ƒҒ]/g, 'f')
+      .replace(/[96ԍɡ]/g, 'g')
+      .replace(/[#нħ]/g, 'h')
+      .replace(/[1!|íі]/g, 'i')
+      .replace(/[_|ј]/g, 'j')
+      .replace(/[|<к]/g, 'k')
+      .replace(/[1|£ⅼ]/g, 'l')
+      .replace(/[мɱ]/g, 'm')
+      .replace(/[пη]/g, 'n')
+      .replace(/[0øоσ]/g, 'o')
+      .replace(/[рƿ]/g, 'p')
+      .replace(/[9ԛ]/g, 'q')
+      .replace(/[®г]/g, 'r')
+      .replace(/[$5ѕš]/g, 's')
+      .replace(/[7†т]/g, 't')
+      .replace(/[μцυ]/g, 'u')
+      .replace(/[νѵ]/g, 'v')
+      .replace(/[ωщш]/g, 'w')
+      .replace(/[×хχ]/g, 'x')
+      .replace(/[¥уγ]/g, 'y')
+      .replace(/[2зζ]/g, 'z')
+      .replace(/[^\w\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function generateLeetVariations(word) {
+    const variations = new Set([word]);
+    const chars = word.split('');
+    
+    function generateVariations(index, current) {
+      if (index === chars.length) {
+        variations.add(current.join(''));
+        return;
+      }
+      
+      const char = chars[index].toLowerCase();
+      const leetOptions = LEET_MAP[char] || [];
+      
+      current.push(chars[index]);
+      generateVariations(index + 1, current);
+      current.pop();
+      
+      for (const leet of leetOptions) {
+        current.push(leet);
+        generateVariations(index + 1, current);
+        current.pop();
+      }
+    }
+    
+    generateVariations(0, []);
+    return Array.from(variations);
+  }
+
+  function generateAllVariations(words) {
+    const variations = new Set();
+    
+    for (const word of words) {
+      variations.add(word.toLowerCase());
+      variations.add(word.toUpperCase());
+      variations.add(word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+      
+      const leetVariations = generateLeetVariations(word);
+      for (const variation of leetVariations.slice(0, 50)) {
+        variations.add(variation.toLowerCase());
+      }
+    }
+    
+    return Array.from(variations);
+  }
+
+  const BANNED_WORDS = {
+    underwear: [
+      'underwear', 'undies', 'panties', 'briefs', 'boxers', 'boxer-briefs', 'thong', 'g-string',
+      'bikini', 'hipster', 'boyshorts', 'high-waist', 'control-top', 'shapewear', 'lingerie',
+      'bra', 'brassiere', 'sports-bra', 'push-up', 'strapless', 'bralette', 'camisole', 'tank-top',
+      'undershirt', 'vest', 'singlet', 'long-johns', 'thermal-underwear', 'union-suit', 'onesie',
+      'chaddi', 'chaddhi', 'kaccha', 'kacchha', 'langot', 'langoot', 'undergarment', 'undergarments',
+      'peticoat', 'petticoat', 'blouse', 'brah', 'brassier', 'choli', 'lehenga', 'ghagra'
+    ],
+    explicit: [
+      'nude', 'naked', 'bare', 'exposed', 'revealing', 'see-through', 'sheer', 'transparent',
+      'lace', 'silk', 'satin', 'velvet', 'mesh', 'fishnet', 'cut-out', 'open-crotch', 'crotchless',
+      'erotic', 'sexual', 'sexy', 'seductive', 'provocative', 'intimate', 'private', 'personal',
+      'boudoir', 'bedroom', 'nightwear', 'sleepwear', 'pajamas', 'nightgown', 'negligee', 'peignoir',
+      'nanga', 'nange', 'nangi', 'bezaar', 'bezaari', 'ashleel', 'ashleelta', 'ganda', 'gandi',
+      'besharam', 'besharmi', 'badmash', 'badmaash', 'aashique', 'aashiq', 'rangreli', 'rangraliya'
+    ],
+    bodyParts: [
+      'breast', 'breasts', 'boob', 'boobs', 'nipple', 'nipples', 'areola', 'cleavage',
+      'butt', 'buttocks', 'bottom', 'rear', 'behind', 'cheeks', 'glutes',
+      'groin', 'crotch', 'genital', 'genitals', 'pubic', 'private-parts', 'intimate-area',
+      'stan', 'stann', 'chuch', 'chuchi', 'chuchiyan', 'nipal', 'nipple', 'gaand', 'gand',
+      'bum', 'bumm', 'peechwada', 'pichwada', 'kamar', 'jaangh', 'jagh', 'private', 'privates',
+      'gupt', 'guptang', 'ling', 'yoni', 'shishn', 'shishan'
+    ],
+    actions: [
+      'flash', 'expose', 'show', 'reveal', 'display', 'model', 'pose', 'strip', 'undress',
+      'remove', 'take-off', 'peel-off', 'slip-off', 'adjust', 'fix', 'arrange', 'position',
+      'dikha', 'dikhao', 'dikhana', 'utaro', 'utarna', 'nikal', 'nikalo', 'nikalna',
+      'khol', 'kholo', 'kholna', 'ulaat', 'ulta', 'ultaana', 'pehen', 'pehno', 'pehanna'
+    ],
+    contexts: [
+      'fetish', 'kink', 'bdsm', 'roleplay', 'fantasy', 'desire', 'lust', 'arousal',
+      'exhibitionist', 'voyeur', 'peep', 'spy', 'watch', 'stare', 'gaze', 'ogle',
+      'pervert', 'creep', 'weirdo', 'freak', 'deviant', 'obsessed', 'addicted',
+      'kaam', 'kaamuk', 'kaamini', 'vasna', 'vasana', 'ichha', 'ichcha', 'tarse', 'tarsao',
+      'majboor', 'majboori', 'dabao', 'dabaao', 'zor', 'zabardasti', 'balatkar', 'balatkaar',
+      'chhed', 'chhedna', 'chhuo', 'chhuna', 'maslo', 'masalna', 'dabao', 'dabana'
+    ]
+  };
+
+  const ALL_BANNED_VARIATIONS = [];
+  Object.values(BANNED_WORDS).forEach(categoryWords => {
+    ALL_BANNED_VARIATIONS.push(...generateAllVariations(categoryWords));
+  });
+
+  function containsBannedWords(text) {
+    if (!text || typeof text !== 'string') return false;
+    const normalizedText = normalizeText(text);
+    for (const bannedWord of ALL_BANNED_VARIATIONS) {
+      const normalizedBanned = normalizeText(bannedWord);
+      if (normalizedText.includes(normalizedBanned)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function filterBannedWords(text, replacement = '***') {
+    if (!text || typeof text !== 'string') return text;
+    let filteredText = text;
+    const normalizedText = normalizeText(text);
+    for (const bannedWord of ALL_BANNED_VARIATIONS) {
+      const normalizedBanned = normalizeText(bannedWord);
+      if (normalizedText.includes(normalizedBanned)) {
+        const regex = new RegExp(bannedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        filteredText = filteredText.replace(regex, replacement);
+      }
+    }
+    return filteredText;
+  }
+
+  function getBannedWordsFound(text) {
+    if (!text || typeof text !== 'string') return [];
+    const found = [];
+    const normalizedText = normalizeText(text);
+    for (const bannedWord of ALL_BANNED_VARIATIONS) {
+      const normalizedBanned = normalizeText(bannedWord);
+      if (normalizedText.includes(normalizedBanned)) {
+        found.push(bannedWord);
+      }
+    }
+    return [...new Set(found)];
+  }
+
+  return {
+    BANNED_WORDS,
+    ALL_BANNED_VARIATIONS,
+    containsBannedWords,
+    filterBannedWords,
+    getBannedWordsFound,
+    normalizeText,
+    generateLeetVariations
+  };
+})();
+
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
@@ -93,6 +300,20 @@ function escapeHtml(text) {
 
 function sanitizeInput(text) {
   return String(text || "").trim().slice(0, 500);
+}
+
+// Validate input for banned words
+function validateInput(text, fieldName) {
+  if (BANNED_WORDS_LIBRARY.containsBannedWords(text)) {
+    const foundWords = BANNED_WORDS_LIBRARY.getBannedWordsFound(text);
+    throw new Error(`${fieldName} contains inappropriate content: ${foundWords.join(', ')}`);
+  }
+  return true;
+}
+
+// Filter banned words from input
+function filterInput(text) {
+  return BANNED_WORDS_LIBRARY.filterBannedWords(text, '[FILTERED]');
 }
 
 // ===== 4. SMALL HELPERS =====
@@ -521,10 +742,10 @@ function editItem(item) {
   // Pre-fill the form with existing post data
   document.getElementById("type").value = item.type || "lost";
   categorySelect.value = item.category || "other";
-  document.getElementById("name").value = item.name || "";
-  document.getElementById("title").value = item.title || "";
-  document.getElementById("description").value = item.description || "";
-  document.getElementById("place").value = item.place || "";
+  document.getElementById("name").value = filterInput(item.name || "");
+  document.getElementById("title").value = filterInput(item.title || "");
+  document.getElementById("description").value = filterInput(item.description || "");
+  document.getElementById("place").value = filterInput(item.place || "");
   document.getElementById("whatsapp").value = item.whatsapp ? (item.whatsapp.startsWith("91") ? item.whatsapp.slice(2) : item.whatsapp) : "";
   selectedFile = null;
   pickedLocation = item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null;
@@ -959,6 +1180,22 @@ form.addEventListener("submit", async function (event) {
     return;
   }
 
+  // Validate inputs for banned words
+  try {
+    const name = document.getElementById("name").value;
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("description").value;
+    const place = document.getElementById("place").value;
+
+    validateInput(name, "Name");
+    validateInput(title, "Title");
+    validateInput(description, "Description");
+    validateInput(place, "Place");
+  } catch (err) {
+    toast(err.message, "error");
+    return;
+  }
+
   postBtn.disabled = true;
   const editId = form.dataset.editId;
   postBtn.textContent = editId ? "Saving..." : "Posting...";
@@ -987,10 +1224,10 @@ form.addEventListener("submit", async function (event) {
       const updates = {
         type: sanitizeInput(document.getElementById("type").value),
         category: sanitizeInput(categorySelect.value),
-        name: sanitizeInput(document.getElementById("name").value),
-        title: sanitizeInput(document.getElementById("title").value),
-        place: sanitizeInput(document.getElementById("place").value),
-        description: sanitizeInput(document.getElementById("description").value),
+        name: filterInput(sanitizeInput(document.getElementById("name").value)),
+        title: filterInput(sanitizeInput(document.getElementById("title").value)),
+        place: filterInput(sanitizeInput(document.getElementById("place").value)),
+        description: filterInput(sanitizeInput(document.getElementById("description").value)),
         whatsapp: whatsapp,
         lat: pickedLocation ? pickedLocation.lat : null,
         lng: pickedLocation ? pickedLocation.lng : null
@@ -1006,10 +1243,10 @@ form.addEventListener("submit", async function (event) {
       result = await db.from("items").insert({
         type: sanitizeInput(document.getElementById("type").value),
         category: sanitizeInput(categorySelect.value),
-        name: sanitizeInput(document.getElementById("name").value),
-        title: sanitizeInput(document.getElementById("title").value),
-        place: sanitizeInput(document.getElementById("place").value),
-        description: sanitizeInput(document.getElementById("description").value),
+        name: filterInput(sanitizeInput(document.getElementById("name").value)),
+        title: filterInput(sanitizeInput(document.getElementById("title").value)),
+        place: filterInput(sanitizeInput(document.getElementById("place").value)),
+        description: filterInput(sanitizeInput(document.getElementById("description").value)),
         whatsapp: whatsapp,
         image_url: imageUrl,
         lat: pickedLocation ? pickedLocation.lat : null,
