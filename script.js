@@ -1178,11 +1178,18 @@ form.addEventListener("submit", async function (event) {
   const description = document.getElementById("description").value;
   const place = document.getElementById("place").value;
 
+  console.log("Debug - Form values:", { name, title, description, place });
+  console.log("Debug - Library loaded:", !!BANNED_WORDS_LIBRARY);
+  
   const violations = [];
   
   function checkField(value, fieldName) {
-    if (BANNED_WORDS_LIBRARY.containsBannedWords(value)) {
+    console.log(`Debug - Checking ${fieldName}:`, value);
+    const hasBanned = BANNED_WORDS_LIBRARY.containsBannedWords(value);
+    console.log(`Debug - ${fieldName} has banned:`, hasBanned);
+    if (hasBanned) {
       const found = BANNED_WORDS_LIBRARY.getBannedWordsFound(value);
+      console.log(`Debug - ${fieldName} found words:`, found);
       violations.push(`${fieldName}: ${found.join(', ')}`);
     }
   }
@@ -1191,6 +1198,8 @@ form.addEventListener("submit", async function (event) {
   checkField(title, "Title");
   checkField(description, "Description");
   checkField(place, "Place");
+
+  console.log("Debug - Violations:", violations);
 
   if (violations.length > 0) {
     toast("Inappropriate content detected: " + violations.join("; "), "error");
