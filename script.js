@@ -290,12 +290,33 @@ const loginError = document.getElementById("loginError");
 const signupError = document.getElementById("signupError");
 const modalClose = authModal?.querySelector(".modal-close");
 
+// OTP / forgot-password elements
+const switchToForgot = document.getElementById("switchToForgot");
+const verifyCode = document.getElementById("verifyCode");
+const doVerifyBtn = document.getElementById("doVerifyBtn");
+const resendCodeBtn = document.getElementById("resendCodeBtn");
+const verifyError = document.getElementById("verifyError");
+const verifyHint = document.getElementById("verifyHint");
+const forgotEmail = document.getElementById("forgotEmail");
+const doForgotBtn = document.getElementById("doForgotBtn");
+const forgotBack = document.getElementById("forgotBack");
+const forgotError = document.getElementById("forgotError");
+const resetCode = document.getElementById("resetCode");
+const resetPassword = document.getElementById("resetPassword");
+const resetConfirm = document.getElementById("resetConfirm");
+const doResetBtn = document.getElementById("doResetBtn");
+const resetError = document.getElementById("resetError");
+
 // Admin elements
 const adminBtn = document.getElementById("adminBtn");
 const adminModal = document.getElementById("adminModal");
 
 // Auth state
 let isAuthInitialized = false;
+let authBusy = false;          // keeps the modal open during multi-step flows
+let pendingEmail = "";         // email waiting for a code
+let recoveryVerified = false;  // reset-code already accepted
+let resendTimer = null;
 
 // Asks the database whether the current user is an admin (public.is_admin()).
 async function refreshAdmin() {
@@ -316,7 +337,7 @@ function updateAuthUI(session) {
   if (userEmailEl && session?.user?.email) userEmailEl.textContent = session.user.email;
   if (adminBtn && !loggedIn) adminBtn.hidden = true;
 
-  if (loggedIn) hideModal();
+  if (loggedIn && !authBusy) hideModal();
 }
 
 function showAuthError(el, msg) {
@@ -335,6 +356,9 @@ function showModal(formId) {
   if (target) target.hidden = false;
   hideAuthError(loginError);
   hideAuthError(signupError);
+  hideAuthError(verifyError);
+  hideAuthError(forgotError);
+  hideAuthError(resetError);
 }
 
 function hideModal() {
@@ -375,7 +399,15 @@ if (doLoginBtn) doLoginBtn.addEventListener("click", async () => {
     loginEmail.value = "";
     loginPassword.value = "";
   } catch (err) {
-    showAuthError(loginError, err.message);
+    if (/not confirmed/i.test(err.message || "")) {
+      pendingEmail = email;
+      try { await db.auth.resend({ type: "signup", email: email }); } catch (e) {}
+      showModal("verifyForm");
+      startResendCooldown();
+      toast("Please verify your email first. We sent a new code.");
+    } else {
+      showAuthError(loginError, err.message);
+    }
   } finally {
     doLoginBtn.disabled = false; doLoginBtn.textContent = "Login";
   }
@@ -392,20 +424,132 @@ if (doSignupBtn) doSignupBtn.addEventListener("click", async () => {
   if (password.length < 6) { showAuthError(signupError, "Password must be at least 6 characters"); return; }
   doSignupBtn.disabled = true; doSignupBtn.textContent = "Creating account...";
   try {
-    const { error } = await db.auth.signUp({
+    const { data, error } = await db.auth.signUp({
       email, password,
       options: { emailRedirectTo: window.location.origin }
     });
     if (error) throw error;
-    toast("Check your email to confirm your account.", "success");
-    showModal("loginForm");
     signupEmail.value = "";
     signupPassword.value = "";
     signupConfirm.value = "";
+    if (data.session) {
+      toast("Account created!", "success");   // email confirmation is off in Supabase
+    } else {
+      pendingEmail = email;
+      showModal("verifyForm");
+      startResendCooldown();
+      toast("We sent a code to " + email, "success");
+    }
   } catch (err) {
     showAuthError(signupError, err.message);
   } finally {
     doSignupBtn.disabled = false; doSignupBtn.textContent = "Create Account";
+  }
+});
+
+// ----- Email code (OTP) verification -----
+function startResendCooldown() {
+  if (!resendCodeBtn) return;
+  let left = 60;
+  clearInterval(resendTimer);
+  resendCodeBtn.disabled = true;
+  resendCodeBtn.textContent = "Resend code (" + left + "s)";
+  resendTimer = setInterval(() => {
+    left--;
+    if (left <= 0) {
+      clearInterval(resendTimer);
+      resendCodeBtn.disabled = false;
+      resendCodeBtn.textContent = "Resend code";
+    } else {
+      resendCodeBtn.textContent = "Resend code (" + left + "s)";
+    }
+  }, 1000);
+}
+
+if (doVerifyBtn) doVerifyBtn.addEventListener("click", async () => {
+  hideAuthError(verifyError);
+  const token = verifyCode.value.trim();
+  if (!token) { showAuthError(verifyError, "Enter the code from your email"); return; }
+  doVerifyBtn.disabled = true; doVerifyBtn.textContent = "Verifying...";
+  try {
+    const { error } = await db.auth.verifyOtp({ email: pendingEmail, token: token, type: "signup" });
+    if (error) throw error;
+    verifyCode.value = "";
+    toast("Email verified. Welcome!", "success");
+  } catch (err) {
+    showAuthError(verifyError, err.message);
+  } finally {
+    doVerifyBtn.disabled = false; doVerifyBtn.textContent = "Verify";
+  }
+});
+
+if (resendCodeBtn) resendCodeBtn.addEventListener("click", async () => {
+  hideAuthError(verifyError);
+  try {
+    const { error } = await db.auth.resend({ type: "signup", email: pendingEmail });
+    if (error) throw error;
+    toast("New code sent.", "success");
+    startResendCooldown();
+  } catch (err) {
+    showAuthError(verifyError, err.message);
+  }
+});
+
+// ----- Forgot password (code by email) -----
+if (switchToForgot) switchToForgot.addEventListener("click", () => {
+  if (forgotEmail && loginEmail) forgotEmail.value = loginEmail.value;
+  showModal("forgotForm");
+});
+if (forgotBack) forgotBack.addEventListener("click", () => showModal("loginForm"));
+
+if (doForgotBtn) doForgotBtn.addEventListener("click", async () => {
+  hideAuthError(forgotError);
+  const email = forgotEmail.value.trim();
+  if (!email) { showAuthError(forgotError, "Enter your email"); return; }
+  doForgotBtn.disabled = true; doForgotBtn.textContent = "Sending...";
+  try {
+    const { error } = await db.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+    pendingEmail = email;
+    recoveryVerified = false;
+    showModal("resetForm");
+    toast("If that email has an account, a code was sent.", "success");
+  } catch (err) {
+    showAuthError(forgotError, err.message);
+  } finally {
+    doForgotBtn.disabled = false; doForgotBtn.textContent = "Send code";
+  }
+});
+
+if (doResetBtn) doResetBtn.addEventListener("click", async () => {
+  hideAuthError(resetError);
+  const token = resetCode.value.trim();
+  const pw = resetPassword.value;
+  const conf = resetConfirm.value;
+  if (!token) { showAuthError(resetError, "Enter the code from your email"); return; }
+  if (pw.length < 6) { showAuthError(resetError, "Password must be at least 6 characters"); return; }
+  if (pw !== conf) { showAuthError(resetError, "Passwords do not match"); return; }
+
+  doResetBtn.disabled = true; doResetBtn.textContent = "Saving...";
+  authBusy = true;
+  try {
+    if (!recoveryVerified) {
+      const { error } = await db.auth.verifyOtp({ email: pendingEmail, token: token, type: "recovery" });
+      if (error) throw error;
+      recoveryVerified = true;
+    }
+    const { error: upErr } = await db.auth.updateUser({ password: pw });
+    if (upErr) throw upErr;
+    recoveryVerified = false;
+    resetCode.value = ""; resetPassword.value = ""; resetConfirm.value = "";
+    authBusy = false;
+    hideModal();
+    toast("Password updated. You're logged in.", "success");
+  } catch (err) {
+    showAuthError(resetError, err.message);
+  } finally {
+    authBusy = false;
+    doResetBtn.disabled = false; doResetBtn.textContent = "Save new password";
   }
 });
 
@@ -1307,6 +1451,45 @@ function openAdminModal() {
   adminModal.hidden = false;
   refreshAdminStats();
   renderAdminPostsList();
+  loadAuditLog();
+}
+
+// Audit log: written by database triggers/functions, readable by admins only
+async function loadAuditLog() {
+  const box = document.getElementById("adminAuditList");
+  if (!box) return;
+  box.textContent = "Loading...";
+  const { data, error } = await db
+    .from("admin_audit_log")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) { box.textContent = "Could not load log: " + error.message; return; }
+  box.innerHTML = "";
+  if (!data.length) { box.textContent = "No admin actions yet."; return; }
+
+  const labels = {
+    delete_post: "🗑️ Deleted post",
+    delete_all_posts: "⚠️ Deleted ALL posts",
+    export_data: "📤 Exported data"
+  };
+  data.forEach(function (row) {
+    const el = document.createElement("div");
+    el.className = "admin-post-row";
+    const title = row.details && row.details.title ? ' · "' + row.details.title + '"' : "";
+    const count = row.details && row.details.count != null ? " · " + row.details.count + " posts" : "";
+    el.innerHTML = `
+      <div class="admin-post-info">
+        <strong>${escapeHtml(labels[row.action] || row.action)}${escapeHtml(title)}${escapeHtml(count)}</strong>
+        <span class="admin-post-meta">${escapeHtml(row.actor_email || "unknown")} · ${escapeHtml(formatDateTime(row.created_at))}</span>
+      </div>`;
+    box.append(el);
+  });
+}
+
+async function logAdminAction(action, details) {
+  const { error } = await db.rpc("log_admin_action", { p_action: action, p_details: details || null });
+  if (error) throw error;
 }
 
 function refreshAdminStats() {
@@ -1367,12 +1550,20 @@ async function adminDeletePost(id) {
   render();
   refreshAdminStats();
   renderAdminPostsList();
+  loadAuditLog();
 }
 
 async function adminDeleteAllPosts() {
   if (!isAdminUser) return;
   if (!confirm("⚠️ Delete ALL posts? This cannot be undone!")) return;
   if (!confirm("Are you absolutely sure?")) return;
+
+  try {
+    await logAdminAction("delete_all_posts", { count: items.length });
+  } catch (e) {
+    toast("Could not write the audit log, so nothing was deleted: " + e.message, "error");
+    return;
+  }
 
   const { data: rows, error } = await db
     .from("items")
@@ -1387,10 +1578,17 @@ async function adminDeleteAllPosts() {
   render();
   refreshAdminStats();
   renderAdminPostsList();
+  loadAuditLog();
 }
 
-function adminExportAllData() {
+async function adminExportAllData() {
   if (!isAdminUser) return;
+  try {
+    await logAdminAction("export_data", { count: items.length });
+  } catch (e) {
+    toast("Could not write the audit log, so nothing was exported: " + e.message, "error");
+    return;
+  }
   const data = JSON.stringify(items, null, 2);
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -1400,6 +1598,7 @@ function adminExportAllData() {
   a.click();
   URL.revokeObjectURL(url);
   toast("Data exported");
+  loadAuditLog();
 }
 
 // ===== 18. CURSOR + TOUCH LIGHT =====
