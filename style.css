@@ -558,3 +558,7 @@ body {
 .admin-post-info { flex: 1; min-width: 0; }
 .admin-post-info strong { display: block; color: #fff; font-size: 14px; margin-bottom: 4px; }
 .admin-post-meta { font-size: 12px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* login gate */
+body.locked > *:not(#authModal):not(#toasts) { visibility: hidden; }
+body.locked #authModal { background: #06060a; }
+body.locked #authModal .modal-close { display: none; }
