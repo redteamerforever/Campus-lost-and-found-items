@@ -132,6 +132,19 @@ Object.keys(CATEGORIES).forEach(function (key) {
 });
 categoryFilter.value = "all";
 
+// ===== ADMIN CONFIG =====
+// Add admin emails here - these users get full access
+const ADMIN_EMAILS = [
+  "admin@yourdomain.com",      // Replace with your admin email
+  "your-email@gmail.com",      // Your email for testing
+];
+
+function isAdmin(session) {
+  return session?.user?.email && ADMIN_EMAILS.includes(session.user.email.toLowerCase());
+}
+
+let isAdminUser = false;
+
 function sanitizeInput(text) {
   return String(text || "").trim().slice(0, 500);
 }
@@ -252,23 +265,171 @@ form.addEventListener("reset", function () {
 });
 updatePlaceHint();
 
-// ===== 6. SIGN IN (anonymous, automatic) =====
-async function ensureSignedIn() {
+// ===== 6. AUTHENTICATION =====
+// Elements
+const authNotLoggedIn = document.getElementById("authNotLoggedIn");
+const authLoggedIn = document.getElementById("authLoggedIn");
+const userEmailEl = document.getElementById("userEmail");
+const loginBtn = document.getElementById("loginBtn");
+const signupBtn = document.getElementById("signupBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const authModal = document.getElementById("authModal");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
+const switchToSignup = document.getElementById("switchToSignup");
+const switchToLogin = document.getElementById("switchToLogin");
+const doLoginBtn = document.getElementById("doLoginBtn");
+const doSignupBtn = document.getElementById("doSignupBtn");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const signupEmail = document.getElementById("signupEmail");
+const signupPassword = document.getElementById("signupPassword");
+const signupConfirm = document.getElementById("signupConfirm");
+const loginError = document.getElementById("loginError");
+const signupError = document.getElementById("signupError");
+const modalClose = authModal?.querySelector(".modal-close");
+
+// Admin elements
+const adminBtn = document.getElementById("adminBtn");
+const adminModal = document.getElementById("adminModal");
+
+// Auth state
+let isAuthInitialized = false;
+
+function updateAuthUI(session) {
+  const loggedIn = !!session;
+  if (authNotLoggedIn) authNotLoggedIn.hidden = loggedIn;
+  if (authLoggedIn) authLoggedIn.hidden = !loggedIn;
+  if (userEmailEl && session?.user?.email) userEmailEl.textContent = session.user.email;
+  
+  // Show admin button for admin users
+  if (adminBtn) adminBtn.hidden = !isAdmin(session);
+}
+
+function showAuthError(el, msg) {
+  if (el) { el.textContent = msg; el.hidden = false; }
+}
+
+function hideAuthError(el) {
+  if (el) el.hidden = true;
+}
+
+function showModal(formId) {
+  if (!authModal) return;
+  authModal.hidden = false;
+  document.querySelectorAll(".auth-form").forEach(f => f.hidden = true);
+  const form = document.getElementById(formId);
+  if (form) form.hidden = false;
+  hideAuthError(loginError);
+  hideAuthError(signupError);
+}
+
+function hideModal() {
+  if (authModal) authModal.hidden = true;
+}
+
+// Auth modal events
+if (loginBtn) loginBtn.addEventListener("click", () => showModal("loginForm"));
+if (signupBtn) signupBtn.addEventListener("click", () => showModal("signupForm"));
+if (switchToSignup) switchToSignup.addEventListener("click", () => showModal("signupForm"));
+if (switchToLogin) switchToLogin.addEventListener("click", () => showModal("loginForm"));
+if (modalClose) modalClose.addEventListener("click", hideModal);
+if (authModal) authModal.addEventListener("click", e => { if (e.target === authModal) hideModal(); });
+
+// Admin modal events
+if (adminBtn) adminBtn.addEventListener("click", openAdminModal);
+const adminModalClose = adminModal?.querySelector(".modal-close");
+if (adminModalClose) adminModalClose.addEventListener("click", () => { if (adminModal) adminModal.hidden = true; });
+if (adminModal) adminModal.addEventListener("click", e => { if (e.target === adminModal) { adminModal.hidden = true; } });
+
+// Admin action handlers
+const adminDeleteAll = document.getElementById("adminDeleteAll");
+const adminExportData = document.getElementById("adminExportData");
+if (adminDeleteAll) adminDeleteAll.addEventListener("click", adminDeleteAllPosts);
+if (adminExportData) adminExportData.addEventListener("click", adminExportAllData);
+
+// Login
+if (doLoginBtn) doLoginBtn.addEventListener("click", async () => {
+  hideAuthError(loginError);
+  const email = loginEmail?.value?.trim();
+  const password = loginPassword?.value;
+  if (!email || !password) { showAuthError(loginError, "Enter email and password"); return; }
+  doLoginBtn.disabled = true; doLoginBtn.textContent = "Logging in...";
+  try {
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    hideModal();
+    loginForm.reset();
+  } catch (err) {
+    showAuthError(loginError, err.message);
+  } finally {
+    doLoginBtn.disabled = false; doLoginBtn.textContent = "Login";
+  }
+});
+
+// Signup
+if (doSignupBtn) doSignupBtn.addEventListener("click", async () => {
+  hideAuthError(signupError);
+  const email = signupEmail?.value?.trim();
+  const password = signupPassword?.value;
+  const confirm = signupConfirm?.value;
+  if (!email || !password) { showAuthError(signupError, "Enter email and password"); return; }
+  if (password !== confirm) { showAuthError(signupError, "Passwords do not match"); return; }
+  if (password.length < 6) { showAuthError(signupError, "Password must be at least 6 characters"); return; }
+  doSignupBtn.disabled = true; doSignupBtn.textContent = "Creating account...";
+  try {
+    const { error } = await db.auth.signUp({ email, password });
+    if (error) throw error;
+    toast("Account created! Check your email to confirm.", "success");
+    showModal("loginForm");
+    signupForm.reset();
+  } catch (err) {
+    showAuthError(signupError, err.message);
+  } finally {
+    doSignupBtn.disabled = false; doSignupBtn.textContent = "Create Account";
+  }
+});
+
+// Logout
+if (logoutBtn) logoutBtn.addEventListener("click", async () => {
+  await db.auth.signOut();
+});
+
+// Initialize auth - check existing session
+async function initAuth() {
+  if (isAuthInitialized) return;
+  isAuthInitialized = true;
+  
+  const { data: { session } } = await db.auth.getSession();
+  updateAuthUI(session);
+  if (session) currentUserId = session.user.id;
+  isAdminUser = isAdmin(session); // Set initial admin state
+  
+  // Listen for auth changes
+  db.auth.onAuthStateChange((event, session) => {
+    updateAuthUI(session);
+    currentUserId = session?.user?.id || null;
+    isAdminUser = isAdmin(session);
+    if (items.length) render();
+  });
+  
+  // If no session, fall back to anonymous for posting
+  if (!session) {
+    await ensureAnonymous();
+  }
+}
+
+async function ensureAnonymous() {
+  if (currentUserId) return currentUserId;
   if (signInPromise) return signInPromise;
-
-  signInPromise = (async function () {
-    const { data } = await db.auth.getSession();
-    if (data.session) {
-      currentUserId = data.session.user.id;
-      return currentUserId;
-    }
-
+  
+  signInPromise = (async () => {
     const result = await db.auth.signInAnonymously();
     if (result.error) throw result.error;
     currentUserId = result.data.user.id;
     return currentUserId;
   })();
-
+  
   try {
     return await signInPromise;
   } finally {
@@ -276,21 +437,13 @@ async function ensureSignedIn() {
   }
 }
 
-db.auth.onAuthStateChange(function (event, session) {
-  const newId = session && session.user ? session.user.id : null;
-  if (newId && newId !== currentUserId) {
-    currentUserId = newId;
-    if (items.length) render();
-  }
-});
-
 // ===== 7. LOAD POSTS =====
 async function loadItems() {
+  await ensureAnonymous(); // Ensure we have a user (anon or real)
   const { data, error } = await db
     .from("items")
     .select("*")
     .order("created_at", { ascending: false });
-
   if (error) throw error;
   items = data;
   render();
@@ -1037,7 +1190,7 @@ form.addEventListener("submit", async function (event) {
   postBtn.textContent = editId ? "Saving..." : "Posting...";
 
   try {
-    await ensureSignedIn();
+    await ensureAnonymous(); // Use anonymous if not logged in
 
     // upload the photo (if any) to Supabase Storage, inside your own folder
     let imageUrl = null;
@@ -1111,7 +1264,7 @@ async function start() {
   feedStatus.textContent = "Loading posts...";
 
   try {
-    await ensureSignedIn();
+    await initAuth();
     console.log("[Lost & Found] signed in as", currentUserId);
   } catch (err) {
     console.error(err);
@@ -1133,6 +1286,102 @@ async function start() {
 }
 
 start();
+
+// ===== ADMIN FUNCTIONS =====
+function openAdminModal() {
+  if (!adminModal) return;
+  if (!isAdminUser) { toast("Admin access denied", "error"); return; }
+  adminModal.hidden = false;
+  refreshAdminStats();
+  renderAdminPostsList();
+}
+
+function refreshAdminStats() {
+  const now = Date.now();
+  const active = items.filter(i => new Date(i.expires_at).getTime() > now);
+  const solved = items.filter(i => i.status === "solved");
+  const elTotal = document.getElementById("adminTotalPosts");
+  const elActive = document.getElementById("adminActivePosts");
+  const elSolved = document.getElementById("adminSolvedPosts");
+  if (elTotal) elTotal.textContent = items.length;
+  if (elActive) elActive.textContent = active.length;
+  if (elSolved) elSolved.textContent = solved.length;
+}
+
+function renderAdminPostsList() {
+  const container = document.getElementById("adminPostsList");
+  if (!container) return;
+  container.innerHTML = "";
+  
+  const now = Date.now();
+  const sorted = [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  
+  sorted.forEach(item => {
+    const expired = new Date(item.expires_at).getTime() <= now;
+    const row = document.createElement("div");
+    row.className = "admin-post-row";
+    row.innerHTML = `
+      <div class="admin-post-info">
+        <strong>${escapeHtml(item.title)}</strong>
+        <span class="admin-post-meta">
+          ${escapeHtml(item.name)} · ${escapeHtml(item.place)} · ${item.type.toUpperCase()}
+          ${item.status === "solved" ? " · ✅ Solved" : ""}
+          ${expired ? " · ⏰ Expired" : ""}
+        </span>
+      </div>
+      <button class="btn-danger btn-sm admin-delete-single" data-id="${item.id}">Delete</button>
+    `;
+    container.append(row);
+  });
+  
+  // Attach delete handlers
+  container.querySelectorAll(".admin-delete-single").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.target.dataset.id;
+      if (!confirm("Delete this post permanently?")) return;
+      await adminDeletePost(id);
+    });
+  });
+}
+
+async function adminDeletePost(id) {
+  if (!isAdminUser) return;
+  const { error } = await db.from("items").delete().eq("id", id);
+  if (error) { toast("Delete failed: " + error.message, "error"); return; }
+  toast("Post deleted");
+  items = items.filter(i => i.id !== id);
+  render();
+  refreshAdminStats();
+  renderAdminPostsList();
+}
+
+async function adminDeleteAllPosts() {
+  if (!isAdminUser) return;
+  if (!confirm("⚠️ Delete ALL posts? This cannot be undone!")) return;
+  if (!confirm("Are you absolutely sure?")) return;
+  
+  const { error } = await db.from("items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  if (error) { toast("Delete failed: " + error.message, "error"); return; }
+  
+  toast("All posts deleted");
+  items = [];
+  render();
+  refreshAdminStats();
+  renderAdminPostsList();
+}
+
+function adminExportAllData() {
+  if (!isAdminUser) return;
+  const data = JSON.stringify(items, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `lost-found-export-${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("Data exported");
+}
 
 // ===== 18. CURSOR + TOUCH LIGHT =====
 (function () {
