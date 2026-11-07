@@ -606,3 +606,8 @@ body {
   min-width: 220px;
   justify-content: center;
 }
+.auth-form .hint { margin: 8px 0 0; font-size: 13px; color: var(--ink-soft); text-align: center; }
+.auth-form input.code-input { text-align: center; letter-spacing: 8px; font-size: 22px; font-weight: 700; }
+.auth-switch button:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+#adminModal .modal-content { max-width: 560px; max-height: 90vh; overflow-y: auto; }
+.modal-content h3 { margin: 20px 0 10px; color: #fff; font-size: 16px; }
