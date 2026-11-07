@@ -4,13 +4,13 @@ const SUPABASE_URL = "https://acqqbhaoukjarnijhgte.supabase.co";
 const SUPABASE_KEY = "sb_publishable_B6pOoK4snvxsILZmtuPPoQ_ecFBcDLc";
 
 const { createClient } = supabase;
-// FIX: the old `global.headers` block (with Authorization: Bearer <anon key>) was removed.
-// It overrode the logged-in user's token, so auth.uid() was always null and RLS blocked updates.
+// No custom global headers: they would override the logged-in user's token and break RLS.
+// detectSessionInUrl must be true so email-confirmation links log the user in.
 const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: true
   }
 });
 
@@ -109,7 +109,7 @@ const POST_BUTTON_TEXT = "➕ Post an item";
 
 let items = [];            // posts loaded from Supabase
 let lastList = [];         // posts currently shown (after filters)
-let currentUserId = null;  // this browser's anonymous user id
+let currentUserId = null;  // this browser's user id (anonymous or real)
 let signInPromise = null;  // makes sure only ONE sign-in runs at a time
 let selectedFile = null;   // photo chosen by the user
 let pickedLocation = null; // pin {lat, lng}
@@ -132,21 +132,18 @@ Object.keys(CATEGORIES).forEach(function (key) {
 });
 categoryFilter.value = "all";
 
-// ===== ADMIN CONFIG =====
-// Add admin emails here - these users get full access
-const ADMIN_EMAILS = [
-  "admin@yourdomain.com",      // Replace with your admin email
-  "your-email@gmail.com",      // Your email for testing
-];
-
-function isAdmin(session) {
-  return session?.user?.email && ADMIN_EMAILS.includes(session.user.email.toLowerCase());
-}
-
+// Admin status comes from the database (public.is_admin() + RLS policies),
+// NOT from a list of emails in this file.
 let isAdminUser = false;
 
 function sanitizeInput(text) {
   return String(text || "").trim().slice(0, 500);
+}
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
 }
 
 // ===== 4. SMALL HELPERS =====
@@ -296,14 +293,24 @@ const adminModal = document.getElementById("adminModal");
 // Auth state
 let isAuthInitialized = false;
 
+// Asks the database whether the current user is an admin (public.is_admin()).
+async function refreshAdmin() {
+  try {
+    const { data, error } = await db.rpc("is_admin");
+    isAdminUser = !error && !!data;
+  } catch (e) {
+    isAdminUser = false;
+  }
+  if (adminBtn) adminBtn.hidden = !isAdminUser;
+}
+
 function updateAuthUI(session) {
-  const loggedIn = !!session;
+  // anonymous sessions do NOT count as "logged in"
+  const loggedIn = !!session && !session.user.is_anonymous;
   if (authNotLoggedIn) authNotLoggedIn.hidden = loggedIn;
   if (authLoggedIn) authLoggedIn.hidden = !loggedIn;
   if (userEmailEl && session?.user?.email) userEmailEl.textContent = session.user.email;
-  
-  // Show admin button for admin users
-  if (adminBtn) adminBtn.hidden = !isAdmin(session);
+  if (adminBtn && !loggedIn) adminBtn.hidden = true;
 }
 
 function showAuthError(el, msg) {
@@ -318,8 +325,8 @@ function showModal(formId) {
   if (!authModal) return;
   authModal.hidden = false;
   document.querySelectorAll(".auth-form").forEach(f => f.hidden = true);
-  const form = document.getElementById(formId);
-  if (form) form.hidden = false;
+  const target = document.getElementById(formId);
+  if (target) target.hidden = false;
   hideAuthError(loginError);
   hideAuthError(signupError);
 }
@@ -359,7 +366,8 @@ if (doLoginBtn) doLoginBtn.addEventListener("click", async () => {
     const { error } = await db.auth.signInWithPassword({ email, password });
     if (error) throw error;
     hideModal();
-    loginForm.reset();
+    loginEmail.value = "";
+    loginPassword.value = "";
   } catch (err) {
     showAuthError(loginError, err.message);
   } finally {
@@ -378,11 +386,26 @@ if (doSignupBtn) doSignupBtn.addEventListener("click", async () => {
   if (password.length < 6) { showAuthError(signupError, "Password must be at least 6 characters"); return; }
   doSignupBtn.disabled = true; doSignupBtn.textContent = "Creating account...";
   try {
-    const { error } = await db.auth.signUp({ email, password });
+    const { data: { session } } = await db.auth.getSession();
+    let error;
+    if (session?.user?.is_anonymous) {
+      // upgrade the anonymous account: same user id, so existing posts stay yours
+      ({ error } = await db.auth.updateUser(
+        { email, password },
+        { emailRedirectTo: window.location.origin }
+      ));
+    } else {
+      ({ error } = await db.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: window.location.origin }
+      }));
+    }
     if (error) throw error;
-    toast("Account created! Check your email to confirm.", "success");
+    toast("Check your email to confirm your account.", "success");
     showModal("loginForm");
-    signupForm.reset();
+    signupEmail.value = "";
+    signupPassword.value = "";
+    signupConfirm.value = "";
   } catch (err) {
     showAuthError(signupError, err.message);
   } finally {
@@ -399,20 +422,31 @@ if (logoutBtn) logoutBtn.addEventListener("click", async () => {
 async function initAuth() {
   if (isAuthInitialized) return;
   isAuthInitialized = true;
-  
+
+  db.auth.onAuthStateChange((event, session) => {
+    if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
+
+    updateAuthUI(session);
+    const newId = session?.user?.id || null;
+    const changed = newId !== currentUserId;
+    currentUserId = newId;
+
+    // never await Supabase calls directly inside this callback (can deadlock)
+    setTimeout(async () => {
+      await refreshAdmin();
+      if (changed) {
+        try { await loadItems(); } catch (e) { console.error(e); }
+      } else if (items.length) {
+        render();
+      }
+    }, 0);
+  });
+
   const { data: { session } } = await db.auth.getSession();
   updateAuthUI(session);
   if (session) currentUserId = session.user.id;
-  isAdminUser = isAdmin(session); // Set initial admin state
-  
-  // Listen for auth changes
-  db.auth.onAuthStateChange((event, session) => {
-    updateAuthUI(session);
-    currentUserId = session?.user?.id || null;
-    isAdminUser = isAdmin(session);
-    if (items.length) render();
-  });
-  
+  await refreshAdmin();
+
   // If no session, fall back to anonymous for posting
   if (!session) {
     await ensureAnonymous();
@@ -422,14 +456,14 @@ async function initAuth() {
 async function ensureAnonymous() {
   if (currentUserId) return currentUserId;
   if (signInPromise) return signInPromise;
-  
+
   signInPromise = (async () => {
     const result = await db.auth.signInAnonymously();
     if (result.error) throw result.error;
     currentUserId = result.data.user.id;
     return currentUserId;
   })();
-  
+
   try {
     return await signInPromise;
   } finally {
@@ -1230,7 +1264,7 @@ form.addEventListener("submit", async function (event) {
         .select();
 
       if (error) throw error;
-      // FIX: RLS blocks updates silently (0 rows, no error), so check for it
+      // RLS blocks updates silently (0 rows, no error), so check for it
       if (!rows || rows.length === 0) {
         throw new Error("Update was blocked (no rows changed). Check RLS policies / login.");
       }
@@ -1288,6 +1322,8 @@ async function start() {
 start();
 
 // ===== ADMIN FUNCTIONS =====
+// The buttons are only hidden for non-admins; the real protection is the
+// database (RLS policies that call public.is_admin()).
 function openAdminModal() {
   if (!adminModal) return;
   if (!isAdminUser) { toast("Admin access denied", "error"); return; }
@@ -1312,10 +1348,10 @@ function renderAdminPostsList() {
   const container = document.getElementById("adminPostsList");
   if (!container) return;
   container.innerHTML = "";
-  
+
   const now = Date.now();
   const sorted = [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  
+
   sorted.forEach(item => {
     const expired = new Date(item.expires_at).getTime() <= now;
     const row = document.createElement("div");
@@ -1324,20 +1360,20 @@ function renderAdminPostsList() {
       <div class="admin-post-info">
         <strong>${escapeHtml(item.title)}</strong>
         <span class="admin-post-meta">
-          ${escapeHtml(item.name)} · ${escapeHtml(item.place)} · ${item.type.toUpperCase()}
+          ${escapeHtml(item.name)} · ${escapeHtml(item.place)} · ${escapeHtml(String(item.type).toUpperCase())}
           ${item.status === "solved" ? " · ✅ Solved" : ""}
           ${expired ? " · ⏰ Expired" : ""}
         </span>
       </div>
-      <button class="btn-danger btn-sm admin-delete-single" data-id="${item.id}">Delete</button>
+      <button class="btn-danger btn-sm admin-delete-single" data-id="${escapeHtml(item.id)}">Delete</button>
     `;
     container.append(row);
   });
-  
+
   // Attach delete handlers
   container.querySelectorAll(".admin-delete-single").forEach(btn => {
     btn.addEventListener("click", async (e) => {
-      const id = e.target.dataset.id;
+      const id = e.currentTarget.dataset.id;
       if (!confirm("Delete this post permanently?")) return;
       await adminDeletePost(id);
     });
@@ -1346,8 +1382,9 @@ function renderAdminPostsList() {
 
 async function adminDeletePost(id) {
   if (!isAdminUser) return;
-  const { error } = await db.from("items").delete().eq("id", id);
+  const { data: rows, error } = await db.from("items").delete().eq("id", id).select();
   if (error) { toast("Delete failed: " + error.message, "error"); return; }
+  if (!rows || rows.length === 0) { toast("Delete blocked. Check the admin policy.", "error"); return; }
   toast("Post deleted");
   items = items.filter(i => i.id !== id);
   render();
@@ -1359,10 +1396,15 @@ async function adminDeleteAllPosts() {
   if (!isAdminUser) return;
   if (!confirm("⚠️ Delete ALL posts? This cannot be undone!")) return;
   if (!confirm("Are you absolutely sure?")) return;
-  
-  const { error } = await db.from("items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+  const { data: rows, error } = await db
+    .from("items")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000")
+    .select();
   if (error) { toast("Delete failed: " + error.message, "error"); return; }
-  
+  if (!rows || rows.length === 0) { toast("Nothing deleted. Check the admin policy.", "error"); return; }
+
   toast("All posts deleted");
   items = [];
   render();
