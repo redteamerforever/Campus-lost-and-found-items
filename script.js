@@ -110,7 +110,6 @@ const POST_BUTTON_TEXT = "➕ Post an item";
 let items = [];            // posts loaded from Supabase
 let lastList = [];         // posts currently shown (after filters)
 let currentUserId = null;  // this browser's user id (anonymous or real)
-let signInPromise = null;  // makes sure only ONE sign-in runs at a time
 let selectedFile = null;   // photo chosen by the user
 let pickedLocation = null; // pin {lat, lng}
 let userPos = null;        // where the visitor is (for "nearest")
@@ -237,6 +236,11 @@ function closeForm() {
 }
 
 openPostBtn.addEventListener("click", function () {
+  if (form.hidden && !currentUserId) {
+    toast("Please log in to post.", "error");
+    showModal("loginForm");
+    return;
+  }
   if (!form.hidden) {
     // form is open (new post or edit): close and cancel
     closeForm();
@@ -311,6 +315,8 @@ function updateAuthUI(session) {
   if (authLoggedIn) authLoggedIn.hidden = !loggedIn;
   if (userEmailEl && session?.user?.email) userEmailEl.textContent = session.user.email;
   if (adminBtn && !loggedIn) adminBtn.hidden = true;
+
+  if (loggedIn) hideModal();
 }
 
 function showAuthError(el, msg) {
@@ -386,20 +392,10 @@ if (doSignupBtn) doSignupBtn.addEventListener("click", async () => {
   if (password.length < 6) { showAuthError(signupError, "Password must be at least 6 characters"); return; }
   doSignupBtn.disabled = true; doSignupBtn.textContent = "Creating account...";
   try {
-    const { data: { session } } = await db.auth.getSession();
-    let error;
-    if (session?.user?.is_anonymous) {
-      // upgrade the anonymous account: same user id, so existing posts stay yours
-      ({ error } = await db.auth.updateUser(
-        { email, password },
-        { emailRedirectTo: window.location.origin }
-      ));
-    } else {
-      ({ error } = await db.auth.signUp({
-        email, password,
-        options: { emailRedirectTo: window.location.origin }
-      }));
-    }
+    const { error } = await db.auth.signUp({
+      email, password,
+      options: { emailRedirectTo: window.location.origin }
+    });
     if (error) throw error;
     toast("Check your email to confirm your account.", "success");
     showModal("loginForm");
@@ -418,7 +414,7 @@ if (logoutBtn) logoutBtn.addEventListener("click", async () => {
   await db.auth.signOut();
 });
 
-// Initialize auth - check existing session
+// Initialize auth - check existing session (guests browse without any session)
 async function initAuth() {
   if (isAuthInitialized) return;
   isAuthInitialized = true;
@@ -426,8 +422,9 @@ async function initAuth() {
   db.auth.onAuthStateChange((event, session) => {
     if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
 
-    updateAuthUI(session);
-    const newId = session?.user?.id || null;
+    const real = session && !session.user.is_anonymous ? session : null;
+    updateAuthUI(real);
+    const newId = real ? real.user.id : null;
     const changed = newId !== currentUserId;
     currentUserId = newId;
 
@@ -442,38 +439,18 @@ async function initAuth() {
     }, 0);
   });
 
-  const { data: { session } } = await db.auth.getSession();
+  let { data: { session } } = await db.auth.getSession();
+  if (session?.user?.is_anonymous) {
+    await db.auth.signOut(); // leftover anonymous session from the old version
+    session = null;
+  }
   updateAuthUI(session);
-  if (session) currentUserId = session.user.id;
+  currentUserId = session ? session.user.id : null;
   await refreshAdmin();
-
-  // If no session, fall back to anonymous for posting
-  if (!session) {
-    await ensureAnonymous();
-  }
-}
-
-async function ensureAnonymous() {
-  if (currentUserId) return currentUserId;
-  if (signInPromise) return signInPromise;
-
-  signInPromise = (async () => {
-    const result = await db.auth.signInAnonymously();
-    if (result.error) throw result.error;
-    currentUserId = result.data.user.id;
-    return currentUserId;
-  })();
-
-  try {
-    return await signInPromise;
-  } finally {
-    signInPromise = null;
-  }
 }
 
 // ===== 7. LOAD POSTS =====
 async function loadItems() {
-  await ensureAnonymous(); // Ensure we have a user (anon or real)
   const { data, error } = await db
     .from("items")
     .select("*")
@@ -1224,7 +1201,7 @@ form.addEventListener("submit", async function (event) {
   postBtn.textContent = editId ? "Saving..." : "Posting...";
 
   try {
-    await ensureAnonymous(); // Use anonymous if not logged in
+    if (!currentUserId) throw new Error("Please log in first.");
 
     // upload the photo (if any) to Supabase Storage, inside your own folder
     let imageUrl = null;
