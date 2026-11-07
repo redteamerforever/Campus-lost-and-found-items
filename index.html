@@ -18,7 +18,22 @@
       <li>Found something?</li>
       <li>Let's get it back to its owner.</li>
     </ul>
-    <button type="button" id="openPostBtn" class="cta">➕ Post an item</button>
+    <div class="header-actions">
+      <button type="button" id="openPostBtn" class="cta">➕ Post an item</button>
+      <button type="button" id="adminBtn" class="btn-secondary" hidden>⚙️ Admin</button>
+      <div id="authArea">
+        <!-- Not logged in -->
+        <div id="authNotLoggedIn" hidden>
+          <button type="button" id="loginBtn" class="btn-secondary">Login</button>
+          <button type="button" id="signupBtn" class="cta">Sign Up</button>
+        </div>
+        <!-- Logged in -->
+        <div id="authLoggedIn" hidden>
+          <span id="userEmail" class="user-email"></span>
+          <button type="button" id="logoutBtn" class="btn-secondary">Logout</button>
+        </div>
+      </div>
+    </div>
   </header>
 
   <div class="stat-cards">
@@ -103,6 +118,49 @@
   <div id="viewMapBox" class="view-map-box" hidden>
     <div id="viewMap"></div>
     <p id="mapNote" class="feed-status"></p>
+  </div>
+
+  <!-- Auth Modals -->
+  <div id="authModal" class="modal" hidden>
+    <div class="modal-content">
+      <button type="button" class="modal-close" aria-label="Close">&times;</button>
+      <div id="loginForm" class="auth-form">
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="email">
+        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+        <button type="button" id="doLoginBtn" class="cta">Login</button>
+        <p class="auth-switch">Don't have an account? <button type="button" id="switchToSignup">Sign up</button></p>
+        <p id="loginError" class="error" hidden></p>
+      </div>
+      <div id="signupForm" class="auth-form" hidden>
+        <h2>Sign Up</h2>
+        <input type="email" id="signupEmail" placeholder="Email" required autocomplete="email">
+        <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" required minlength="6" autocomplete="new-password">
+        <input type="password" id="signupConfirm" placeholder="Confirm Password" required autocomplete="new-password">
+        <button type="button" id="doSignupBtn" class="cta">Create Account</button>
+        <p class="auth-switch">Already have an account? <button type="button" id="switchToLogin">Login</button></p>
+        <p id="signupError" class="error" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Modal -->
+  <div id="adminModal" class="modal" hidden>
+    <div class="modal-content">
+      <button type="button" class="modal-close" aria-label="Close">&times;</button>
+      <h2>⚙️ Admin Panel</h2>
+      <div class="admin-stats">
+        <div class="admin-stat"><span id="adminTotalPosts" class="stat-num">0</span><span class="stat-label">Total Posts</span></div>
+        <div class="admin-stat"><span id="adminActivePosts" class="stat-num">0</span><span class="stat-label">Active</span></div>
+        <div class="admin-stat"><span id="adminSolvedPosts" class="stat-num">0</span><span class="stat-label">Solved</span></div>
+      </div>
+      <div class="admin-actions">
+        <button type="button" id="adminDeleteAll" class="btn-danger">Delete All Posts</button>
+        <button type="button" id="adminExportData" class="btn-secondary">Export Data</button>
+      </div>
+      <h3>All Posts</h3>
+      <div id="adminPostsList" class="admin-posts-list"></div>
+    </div>
   </div>
 
   <footer class="footer">Made for our campus · Posts expire automatically after 7 days</footer>
