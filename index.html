@@ -124,22 +124,62 @@
   <div id="authModal" class="modal" hidden>
     <div class="modal-content">
       <button type="button" class="modal-close" aria-label="Close">&times;</button>
+
+      <!-- Login -->
       <div id="loginForm" class="auth-form">
         <h2>Login</h2>
         <input type="email" id="loginEmail" placeholder="Email" required autocomplete="email">
         <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+        <div id="captchaLogin" class="captcha-box"></div>
         <button type="button" id="doLoginBtn" class="cta">Login</button>
+        <p class="auth-switch"><button type="button" id="switchToForgot">Forgot password?</button></p>
         <p class="auth-switch">Don't have an account? <button type="button" id="switchToSignup">Sign up</button></p>
         <p id="loginError" class="error" hidden></p>
       </div>
+
+      <!-- Sign up -->
       <div id="signupForm" class="auth-form" hidden>
         <h2>Sign Up</h2>
         <input type="email" id="signupEmail" placeholder="Email" required autocomplete="email">
         <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" required minlength="6" autocomplete="new-password">
         <input type="password" id="signupConfirm" placeholder="Confirm Password" required autocomplete="new-password">
+        <div id="captchaSignup" class="captcha-box"></div>
         <button type="button" id="doSignupBtn" class="cta">Create Account</button>
         <p class="auth-switch">Already have an account? <button type="button" id="switchToLogin">Login</button></p>
         <p id="signupError" class="error" hidden></p>
+      </div>
+
+      <!-- Verify email with a code -->
+      <div id="verifyForm" class="auth-form" hidden>
+        <h2>Verify your email</h2>
+        <p id="verifyHint" class="hint">Enter the code we sent to your email.</p>
+        <input type="text" id="verifyCode" class="code-input" placeholder="------" inputmode="numeric" maxlength="10" autocomplete="one-time-code">
+        <button type="button" id="doVerifyBtn" class="cta">Verify</button>
+        <div id="captchaVerify" class="captcha-box"></div>
+        <p class="auth-switch"><button type="button" id="resendCodeBtn">Resend code</button></p>
+        <p id="verifyError" class="error" hidden></p>
+      </div>
+
+      <!-- Forgot password: step 1 (ask for email) -->
+      <div id="forgotForm" class="auth-form" hidden>
+        <h2>Reset password</h2>
+        <p class="hint">We'll email you a code.</p>
+        <input type="email" id="forgotEmail" placeholder="Email" required autocomplete="email">
+        <div id="captchaForgot" class="captcha-box"></div>
+        <button type="button" id="doForgotBtn" class="cta">Send code</button>
+        <p class="auth-switch"><button type="button" id="forgotBack">Back to login</button></p>
+        <p id="forgotError" class="error" hidden></p>
+      </div>
+
+      <!-- Forgot password: step 2 (code + new password) -->
+      <div id="resetForm" class="auth-form" hidden>
+        <h2>New password</h2>
+        <p class="hint">Enter the code from your email and choose a new password.</p>
+        <input type="text" id="resetCode" class="code-input" placeholder="------" inputmode="numeric" maxlength="10" autocomplete="one-time-code">
+        <input type="password" id="resetPassword" placeholder="New password (min 6 chars)" minlength="6" autocomplete="new-password">
+        <input type="password" id="resetConfirm" placeholder="Confirm new password" autocomplete="new-password">
+        <button type="button" id="doResetBtn" class="cta">Save new password</button>
+        <p id="resetError" class="error" hidden></p>
       </div>
     </div>
   </div>
@@ -160,6 +200,8 @@
       </div>
       <h3>All Posts</h3>
       <div id="adminPostsList" class="admin-posts-list"></div>
+      <h3>Audit log</h3>
+      <div id="adminAuditList" class="admin-posts-list"></div>
     </div>
   </div>
 
@@ -169,6 +211,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script src="script.js"></script>
 </body>
 </html>
