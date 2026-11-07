@@ -159,7 +159,7 @@ const BANNED_WORDS = {
   ],
   profanity: [
     // English profanity
-    'fuck', 'fucking', 'fucker', 'motherfucker', 'motherfucking',
+    'fuck', 'fucking', 'fucker', 'motherfucker', 'motherfucking','badcow','badkhow'
     'shit', 'shitting', 'shitty', 'bullshit', 'bullshitting',
     'bitch', 'bitching', 'bitchy', 'sonofabitch', 'sonofbitch',
     'ass', 'asshole', 'asshat', 'dumbass', 'smartass', 'jackass', 'badass',
@@ -172,8 +172,9 @@ const BANNED_WORDS = {
     'whore', 'ho', 'hoe', 'slut', 'slutty',
     'bastard', 'bastards',
     'wtf', 'stfu', 'gtfo', 'lmfao', 'fml',
+   
     // Hinglish profanity
-    'bhosdi', 'bhosdike', 'bhosdika', 'bhosdiwala',
+    'bhosdi','kachhe', 'bhosdike', 'bhosdika', 'bhosdiwala',
     'madarchod', 'madarchod', 'madarchoot',
     'behenchod', 'behenchoot', 'behenchod',
     'gaand', 'gaandu', 'gaandfat', 'gaandmasti',
@@ -196,11 +197,11 @@ const BANNED_WORDS = {
     's h i t', 'b i t c h',
     'm f', 'mf', 'mtherfcker',
     'bhenchod', 'behenchod', 'bhen choot',
-    'madar chod', 'madar choot',
-    'bhosdi ke', 'bhosdi ka',
-    'gaand mein', 'gaand me',
-    'lund ke', 'lund ka',
-    'chut ke', 'chut ka'
+    'madar chod', 'madar choot','gaand','gaandu','gandu','ma ki kirkiri',
+    'bhosdi ke', 'bhosdi ka','modda guduvu','modda','moda',
+    'gaand mein', 'gaand me','lanja kodaka','lanja koduku','moddala panchayati'
+    'lund ke', 'lund ka', 'muh me le','pukesh','teri maki ki','langa kodaka'
+    'chut ke', 'chut ka','gaand me land','sulli','dengey','puka'
   ]
 };
 
