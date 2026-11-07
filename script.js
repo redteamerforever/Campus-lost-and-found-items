@@ -307,6 +307,43 @@ const resetConfirm = document.getElementById("resetConfirm");
 const doResetBtn = document.getElementById("doResetBtn");
 const resetError = document.getElementById("resetError");
 
+// ----- Captcha (Cloudflare Turnstile) -----
+// Paste your Turnstile SITE key here. Leave "" to turn the captcha off in the page.
+const TURNSTILE_SITE_KEY = "";
+const captchaTokens = {};
+const captchaWidgets = {};
+
+function mountCaptcha(name) {
+  if (!TURNSTILE_SITE_KEY || !window.turnstile) return;
+  if (captchaWidgets[name] != null) return;
+  const selector = "#captcha" + name.charAt(0).toUpperCase() + name.slice(1);
+  if (!document.querySelector(selector)) return;
+  captchaWidgets[name] = window.turnstile.render(selector, {
+    sitekey: TURNSTILE_SITE_KEY,
+    theme: "dark",
+    callback: function (t) { captchaTokens[name] = t; },
+    "expired-callback": function () { captchaTokens[name] = null; },
+    "error-callback": function () { captchaTokens[name] = null; }
+  });
+}
+
+function resetCaptcha(name) {
+  captchaTokens[name] = null;
+  if (captchaWidgets[name] != null && window.turnstile) window.turnstile.reset(captchaWidgets[name]);
+}
+
+function captchaOpts(name) {
+  return TURNSTILE_SITE_KEY ? { captchaToken: captchaTokens[name] } : {};
+}
+
+function needCaptcha(name, errEl) {
+  if (TURNSTILE_SITE_KEY && !captchaTokens[name]) {
+    showAuthError(errEl, "Please complete the captcha.");
+    return true;
+  }
+  return false;
+}
+
 // Admin elements
 const adminBtn = document.getElementById("adminBtn");
 const adminModal = document.getElementById("adminModal");
@@ -354,6 +391,8 @@ function showModal(formId) {
   document.querySelectorAll(".auth-form").forEach(f => f.hidden = true);
   const target = document.getElementById(formId);
   if (target) target.hidden = false;
+  const captchaName = { loginForm: "login", signupForm: "signup", forgotForm: "forgot", verifyForm: "verify" }[formId];
+  if (captchaName) mountCaptcha(captchaName);
   hideAuthError(loginError);
   hideAuthError(signupError);
   hideAuthError(verifyError);
@@ -391,9 +430,10 @@ if (doLoginBtn) doLoginBtn.addEventListener("click", async () => {
   const email = loginEmail?.value?.trim();
   const password = loginPassword?.value;
   if (!email || !password) { showAuthError(loginError, "Enter email and password"); return; }
+  if (needCaptcha("login", loginError)) return;
   doLoginBtn.disabled = true; doLoginBtn.textContent = "Logging in...";
   try {
-    const { error } = await db.auth.signInWithPassword({ email, password });
+    const { error } = await db.auth.signInWithPassword({ email, password, options: captchaOpts("login") });
     if (error) throw error;
     hideModal();
     loginEmail.value = "";
@@ -401,15 +441,15 @@ if (doLoginBtn) doLoginBtn.addEventListener("click", async () => {
   } catch (err) {
     if (/not confirmed/i.test(err.message || "")) {
       pendingEmail = email;
-      try { await db.auth.resend({ type: "signup", email: email }); } catch (e) {}
       showModal("verifyForm");
-      startResendCooldown();
-      toast("Please verify your email first. We sent a new code.");
+      if (resendCodeBtn) { resendCodeBtn.disabled = false; resendCodeBtn.textContent = "Send me a code"; }
+      toast("Please verify your email first. Tap \"Send me a code\".");
     } else {
       showAuthError(loginError, err.message);
     }
   } finally {
     doLoginBtn.disabled = false; doLoginBtn.textContent = "Login";
+    resetCaptcha("login");
   }
 });
 
@@ -422,11 +462,12 @@ if (doSignupBtn) doSignupBtn.addEventListener("click", async () => {
   if (!email || !password) { showAuthError(signupError, "Enter email and password"); return; }
   if (password !== confirm) { showAuthError(signupError, "Passwords do not match"); return; }
   if (password.length < 6) { showAuthError(signupError, "Password must be at least 6 characters"); return; }
+  if (needCaptcha("signup", signupError)) return;
   doSignupBtn.disabled = true; doSignupBtn.textContent = "Creating account...";
   try {
     const { data, error } = await db.auth.signUp({
       email, password,
-      options: { emailRedirectTo: window.location.origin }
+      options: Object.assign({ emailRedirectTo: window.location.origin }, captchaOpts("signup"))
     });
     if (error) throw error;
     signupEmail.value = "";
@@ -444,6 +485,7 @@ if (doSignupBtn) doSignupBtn.addEventListener("click", async () => {
     showAuthError(signupError, err.message);
   } finally {
     doSignupBtn.disabled = false; doSignupBtn.textContent = "Create Account";
+    resetCaptcha("signup");
   }
 });
 
@@ -485,13 +527,16 @@ if (doVerifyBtn) doVerifyBtn.addEventListener("click", async () => {
 
 if (resendCodeBtn) resendCodeBtn.addEventListener("click", async () => {
   hideAuthError(verifyError);
+  if (needCaptcha("verify", verifyError)) return;
   try {
-    const { error } = await db.auth.resend({ type: "signup", email: pendingEmail });
+    const { error } = await db.auth.resend({ type: "signup", email: pendingEmail, options: captchaOpts("verify") });
     if (error) throw error;
     toast("New code sent.", "success");
     startResendCooldown();
   } catch (err) {
     showAuthError(verifyError, err.message);
+  } finally {
+    resetCaptcha("verify");
   }
 });
 
@@ -506,9 +551,10 @@ if (doForgotBtn) doForgotBtn.addEventListener("click", async () => {
   hideAuthError(forgotError);
   const email = forgotEmail.value.trim();
   if (!email) { showAuthError(forgotError, "Enter your email"); return; }
+  if (needCaptcha("forgot", forgotError)) return;
   doForgotBtn.disabled = true; doForgotBtn.textContent = "Sending...";
   try {
-    const { error } = await db.auth.resetPasswordForEmail(email);
+    const { error } = await db.auth.resetPasswordForEmail(email, captchaOpts("forgot"));
     if (error) throw error;
     pendingEmail = email;
     recoveryVerified = false;
@@ -518,6 +564,7 @@ if (doForgotBtn) doForgotBtn.addEventListener("click", async () => {
     showAuthError(forgotError, err.message);
   } finally {
     doForgotBtn.disabled = false; doForgotBtn.textContent = "Send code";
+    resetCaptcha("forgot");
   }
 });
 
