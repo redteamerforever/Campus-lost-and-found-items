@@ -611,3 +611,5 @@ body {
 .auth-switch button:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
 #adminModal .modal-content { max-width: 560px; max-height: 90vh; overflow-y: auto; }
 .modal-content h3 { margin: 20px 0 10px; color: #fff; font-size: 16px; }
+
+.captcha-box { display: flex; justify-content: center; margin-top: 14px; min-height: 0; }
