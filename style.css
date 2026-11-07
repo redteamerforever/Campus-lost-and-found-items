@@ -558,3 +558,51 @@ body {
 .admin-post-info { flex: 1; min-width: 0; }
 .admin-post-info strong { display: block; color: #fff; font-size: 14px; margin-bottom: 4px; }
 .admin-post-meta { font-size: 12px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* header buttons: Post on top, Login / Sign Up below, equal size */
+.header-actions {
+  flex-direction: column;
+  gap: 14px;
+}
+
+#authArea {
+  width: 100%;
+}
+
+#authNotLoggedIn,
+#authLoggedIn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#authNotLoggedIn button,
+#authLoggedIn button {
+  flex: 1 1 0;
+  min-width: 130px;
+  max-width: 180px;
+  justify-content: center;
+  padding: 14px 24px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Login / Logout keep the quieter look, Sign Up stays the highlighted one */
+#authNotLoggedIn .btn-secondary,
+#authLoggedIn .btn-secondary {
+  color: var(--ink);
+  border-color: var(--border-hover);
+}
+
+#authLoggedIn .user-email {
+  flex-basis: 100%;
+  text-align: center;
+}
+
+#openPostBtn {
+  min-width: 220px;
+  justify-content: center;
+}
