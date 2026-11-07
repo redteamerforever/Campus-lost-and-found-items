@@ -309,7 +309,7 @@ const resetError = document.getElementById("resetError");
 
 // ----- Captcha (Cloudflare Turnstile) -----
 // Paste your Turnstile SITE key here. Leave "" to turn the captcha off in the page.
-const TURNSTILE_SITE_KEY = "";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAF3w9efT2dDCjXyv";
 const captchaTokens = {};
 const captchaWidgets = {};
 
